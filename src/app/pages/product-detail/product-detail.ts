@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { Product } from '../../interfaces/product';
+import { FormsModule, NgForm } from '@angular/forms';
+import { Product, Review } from '../../interfaces/product';
 import { ProductService } from '../../services/product';
 import { AuthService } from '../../services/auth';
 import { CartService } from '../../services/cart';
@@ -22,6 +22,14 @@ export class ProductDetail implements OnInit {
   relatedProducts: Product[] = [];
   isLoading: boolean = true;
   activeTab: string = 'description';
+
+  //THÊM CÁC BIẾN CHO REVIEW FORM 
+  isSubmittingReview = false;
+  newReview: Review = {
+    author: 'Khách hàng', // Tên mặc định
+    rating: 0,           // Rating mặc định
+    comment: ''
+  };
 
   constructor(
     private route: ActivatedRoute,
@@ -235,6 +243,47 @@ export class ProductDetail implements OnInit {
   setActiveTab(tab: string): void {
     this.activeTab = tab;
   }
+  onSubmitReview(reviewForm: NgForm): void {
+    if (reviewForm.invalid) {
+      alert('Vui lòng chọn số sao và viết bình luận.');
+      return;
+    }
+    
+    if (!this.product) return;
+
+    // Kiểm tra đăng nhập
+    if (!this.authService.isLoggedIn) {
+      alert('Vui lòng đăng nhập để gửi đánh giá!');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.isSubmittingReview = true;
+
+    // Gán tên tác giả (phòng trường hợp user load trang rồi mới đăng nhập)
+    this.newReview.author = this.authService.userName || 'Khách hàng';
+
+    this.productService.addReview(this.product.id, this.newReview).subscribe({
+      next: (updatedProduct) => {
+        // Cập nhật sản phẩm với review mới
+        this.product = updatedProduct; 
+        alert('Cảm ơn đánh giá của bạn!');
+        
+        // Reset form
+        this.newReview.rating = 5;
+        this.newReview.comment = '';
+        reviewForm.resetForm(this.newReview); // Reset về giá trị mặc định
+
+        this.isSubmittingReview = false;
+      },
+      error: (err) => {
+        console.error('Lỗi khi gửi review:', err);
+        alert('Gửi đánh giá thất bại. Vui lòng thử lại.');
+        this.isSubmittingReview = false;
+      }
+    });
+  }
+
 
   formatArray(items: string[] | undefined): string {
     if (!items || items.length === 0) return '';

@@ -1,5 +1,12 @@
+export interface Review {
+  author: string;
+  rating: number;
+  comment: string;
+  createdAt?: string;
+}
+
 export interface Product {
-  id: string; // SỬA: MongoDB ID là string
+  id: string;
   name: string;
   price: number;
   originalPrice?: number;
@@ -10,9 +17,10 @@ export interface Product {
   brand: string;
   description: string;
   features: string[];
-  stock: number; // SỬA: từ inStock: boolean
+  stock: number; 
   rating: number;
-  reviewCount: number; // SỬA: từ reviews: number
+  reviewCount: number;
+  reviews: Review[];
   isActive?: boolean;
   isFeatured?: boolean;
   type?: string;

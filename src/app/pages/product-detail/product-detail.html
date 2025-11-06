@@ -245,7 +245,7 @@
                       </ul>
                     </div>
                   }
-                  
+                  <!--Thêm sau-->
                   <div class="product-benefits">
                     <h4>🎯 Lợi ích khi sử dụng:</h4>
                     <div class="benefits-grid">
@@ -279,6 +279,7 @@
                       </div>
                     </div>
                   </div>
+                  <!---->
                 </div>
               </div>
             }
@@ -346,64 +347,79 @@
             }
 
             @if (activeTab === 'reviews') {
-              <div class="tab-pane">
-                <div class="reviews-content">
-                  <div class="reviews-summary">
-                    <div class="overall-rating">
-                      <div class="rating-score">{{ product.rating | number:'1.1-1' }}</div>
-                      <div class="rating-stars-large">{{ getStarRating(product.rating || 0) }}</div>
-                      <div class="rating-text">Dựa trên {{ product.reviewCount }} đánh giá</div>
-                    </div>
-                    
-                    <div class="rating-breakdown">
-                      <div class="rating-bar">
-                        <span class="rating-label">5 sao</span>
-                        <div class="rating-progress"><div class="progress-bar" [style.width]="'75%'"></div></div>
-                        <span class="rating-count">75%</span>
-                      </div>
-                      <div class="rating-bar">
-                        <span class="rating-label">4 sao</span>
-                        <div class="rating-progress"><div class="progress-bar" [style.width]="'15%'"></div></div>
-                        <span class="rating-count">15%</span>
-                      </div>
-                      <div class="rating-bar">
-                        <span class="rating-label">3 sao</span>
-                        <div class="rating-progress"><div class="progress-bar" [style.width]="'7%'"></div></div>
-                        <span class="rating-count">7%</span>
-                      </div>
-                      <div class="rating-bar">
-                        <span class="rating-label">2 sao</span>
-                        <div class="rating-progress"><div class="progress-bar" [style.width]="'2%'"></div></div>
-                        <span class="rating-count">2%</span>
-                      </div>
-                      <div class="rating-bar">
-                        <span class="rating-label">1 sao</span>
-                        <div class="rating-progress"><div class="progress-bar" [style.width]="'1%'"></div></div>
-                        <span class="rating-count">1%</span>
-                      </div>
-                    </div>
-                  </div>
+  <div class="tab-pane">
+    <div class="reviews-content">
 
-                  <div class="reviews-list">
-                    <h4>Đánh giá gần đây</h4>
-                    <div class="review-item">
-                      <div class="review-header">
-                        <div class="reviewer-info">
-                          <span class="reviewer-name">Nguyễn Văn A</span>
-                          <span class="review-verified">✅ Đã xác thực mua hàng</span>
-                        </div>
-                        <div class="review-rating">★★★★★</div>
-                      </div>
-                      <p class="review-content">"Sản phẩm chất lượng tuyệt vời, âm thanh sống động."</p>
-                      <div class="review-footer">
-                        <span class="review-date">15/12/2024</span>
-                      </div>
-                    </div>
+      @if (!authService.isLoggedIn) {
+        <div class="review-login-prompt">
+          <h3>Gửi đánh giá của bạn</h3>
+          <p>Vui lòng <a routerLink="/login">đăng nhập</a> để gửi đánh giá và chia sẻ trải nghiệm của bạn!</p>
+        </div>
+      } @else {
+        <div class="review-form-container">
+          <h3>Gửi đánh giá của bạn</h3>
+          <form #reviewForm="ngForm" (ngSubmit)="onSubmitReview(reviewForm)" class="review-form">
+            
+            <div class="form-group">
+              <label class="form-label">Bạn đánh giá bao nhiêu sao? *</label>
+              
+              <div class="star-rating-input">
+                <input type="radio" id="star5" [(ngModel)]="newReview.rating" name="rating" [value]="5" required>
+                <label for="star5" title="5 sao">★</label>
+                <input type="radio" id="star4" [(ngModel)]="newReview.rating" name="rating" [value]="4" required>
+                <label for="star4" title="4 sao">★</label>
+                <input type="radio" id="star3" [(ngModel)]="newReview.rating" name="rating" [value]="3" required>
+                <label for="star3" title="3 sao">★</label>
+                <input type="radio" id="star2" [(ngModel)]="newReview.rating" name="rating" [value]="2" required>
+                <label for="star2" title="2 sao">★</label>
+                <input type="radio" id="star1" [(ngModel)]="newReview.rating" name="rating" [value]="1" required>
+                <label for="star1" title="1 sao">★</label>
+              </div>
+            </div>
+            
+            
+
+            <div class="form-group">
+              <label class="form-label" for="reviewComment">Bình luận của bạn *</label>
+              <textarea id="reviewComment" [(ngModel)]="newReview.comment" name="comment" class="form-input" rows="4" placeholder="Sản phẩm này tuyệt vời..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" [disabled]="reviewForm.invalid || isSubmittingReview">
+              {{ isSubmittingReview ? 'Đang gửi...' : 'Gửi Đánh Giá' }}
+            </button>
+          </form>
+        </div>
+      }
+      <div class="reviews-list-container">
+        <h3>Tất cả đánh giá ({{ product.reviewCount }})</h3>
+        
+        @if (!product.reviews || product.reviews.length === 0) {
+          <div class="review-item-placeholder">
+            <p>Chưa có đánh giá nào cho sản phẩm này.</p>
+          </div>
+        } @else {
+          <div class="reviews-list">
+            @for (review of product.reviews; track $index) {
+              <div class="review-item">
+                <div class="review-header">
+                  <div class="reviewer-info">
+                    <span class="reviewer-name">{{ review.author }}</span>
                   </div>
+                  <div class="review-rating">{{ '★'.repeat(review.rating) }}{{ '☆'.repeat(5 - review.rating) }}</div>
+                </div>
+                <p class="review-content">{{ review.comment }}</p>
+                <div class="review-footer">
+                  <span class="review-date">{{ review.createdAt | date:'dd/MM/yyyy' }}</span>
                 </div>
               </div>
             }
+          </div>
+        }
+      </div>
 
+    </div>
+  </div>
+}
             @if (activeTab === 'warranty') {
               <div class="tab-pane">
                 </div>

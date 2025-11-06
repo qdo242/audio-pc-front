@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map, of } from 'rxjs';
-import { Product } from '../interfaces/product';
+import { Product, Review } from '../interfaces/product';
 
 // Định nghĩa kiểu trả về chung từ backend
 interface ApiResponse<T> {
@@ -12,6 +12,8 @@ interface ApiResponse<T> {
   count?: number;
 }
 
+
+
 @Injectable({
   providedIn: 'root'
 })
@@ -19,6 +21,13 @@ export class ProductService {
   private apiUrl = 'http://localhost:8080/api/products';
 
   constructor(private http: HttpClient) { }
+
+  addReview(productId: string, review: Review): Observable<Product> {
+    return this.http.post<ApiResponse<Product>>(`${this.apiUrl}/${productId}/reviews`, review)
+      .pipe(
+        map(response => response.product as Product)
+      );
+  }
 
   // Lấy tất cả sản phẩm
   getAllProducts(): Observable<Product[]> {
