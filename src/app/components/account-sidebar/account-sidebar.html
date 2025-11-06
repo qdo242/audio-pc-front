@@ -1,0 +1,40 @@
+<aside class="profile-sidebar">
+  <div class="user-greeting">
+    <div class="user-avatar">
+      {{ authService.getUserInitials() }}
+    </div>
+    <div class="user-info">
+      <span class="hello-text">Xin chào,</span>
+      <strong class="user-name">{{ authService.userName }}</strong>
+    </div>
+  </div>
+  <nav class="profile-nav">
+    <a 
+      routerLink="/profile" 
+      class="nav-item"
+      [class.active]="activePage === 'profile'">
+      👤 Thông tin tài khoản
+    </a>
+    <a 
+      routerLink="/orders" 
+      class="nav-item"
+      [class.active]="activePage === 'orders'">
+      📦 Lịch sử đơn hàng
+    </a>
+    <a 
+      routerLink="/wishlist" 
+      class="nav-item"
+      [class.active]="activePage === 'wishlist'">
+      ❤️ Danh sách yêu thích
+    </a>
+    <button 
+      class="nav-item"
+      [class.active]="activePage === 'password'"
+      (click)="navigateToPasswordTab()">
+      🔐 Đổi mật khẩu
+    </button>
+    <a (click)="logout()" class="nav-item logout">
+      🚪 Đăng xuất
+    </a>
+  </nav>
+</aside>

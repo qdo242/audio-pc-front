@@ -1,0 +1,36 @@
+<div class="wishlist-page">
+  <div class="container">
+    <div class="page-header">
+      <h1>❤️ Danh Sách Yêu Thích</h1>
+      <p>Những sản phẩm bạn quan tâm nhất</p>
+    </div>
+
+    @if (isLoading) {
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Đang tải danh sách yêu thích...</p>
+      </div>
+    } @else {
+      @if (wishlistProducts.length > 0) {
+        <div class="wishlist-grid">
+          @for (product of wishlistProducts; track product.id) {
+            <div class="wishlist-item-wrapper">
+              <app-product-card 
+                [product]="product"
+                (wishlistChanged)="onProductRemoved()">
+              </app-product-card>
+              
+              </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          <div class="empty-icon">💔</div>
+          <h2>Danh sách yêu thích trống</h2>
+          <p>Hãy khám phá và thêm sản phẩm bạn yêu thích vào đây!</p>
+          <a routerLink="/products" class="btn btn-primary">Khám phá sản phẩm</a>
+        </div>
+      }
+    }
+  </div>
+</div>

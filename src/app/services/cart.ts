@@ -10,7 +10,7 @@ export interface CartItem {
   price: number; 
   quantity: number;
   subTotal?: number; 
-  image: string; // <-- Quan trọng
+  image: string; 
 }
 
 // Interface dùng nội bộ trong Angular
@@ -21,8 +21,7 @@ export interface Cart {
   totalAmount: number; 
 }
 
-// Interface CHỈ DÙNG ĐỂ GỬI REQUEST (không có ảnh, giá là string)
-// Backend không cần lưu ảnh giỏ hàng, nó chỉ cần biết ID
+
 interface CartItemRequest {
   productId: string;
   productName: string;
@@ -43,11 +42,7 @@ export class CartService {
 
   constructor(private http: HttpClient) {}
 
-  // ===================================
-  // HÀM GỌI API (Đã xử lý kiểu dữ liệu)
-  // ===================================
-
-  // Nhận về Cart (Backend không trả về ảnh)
+  
   private getCartByUserAPI(userId: string): Observable<Cart> {
     return this.http.get<Cart>(`${this.apiUrl}/user/${userId}`);
   }
@@ -161,21 +156,32 @@ export class CartService {
     return items.reduce((sum, item) => sum + item.quantity, 0);
   }
 
-  loadCartForUser(userId: string = 'user123'): void {
-    // Tạm thời không load từ backend để giữ ảnh local,
-    // Vì backend không lưu ảnh.
-    // Khi backend lưu ảnh, hãy mở lại hàm này.
-    /*
-    this.getCartByUserAPI(userId).subscribe({
-      next: (cart) => {
-        // Không thể cập nhật subject vì cart.items từ backend không có ảnh
-        // this.cartItemsSubject.next(cart.items); 
-      },
-      error: (error) => {
-        console.error('Error loading cart:', error);
-        this.cartItemsSubject.next([]); 
-      }
-    });
-    */
+ private getFullImageUrl(url: string | undefined): string {
+    const defaultPlaceholder = 'assets/images/default-product.png';
+    if (!url || url.trim() === '') {
+      return defaultPlaceholder; // Trả về ảnh mặc định nếu URL rỗng
+    }
+    if (url.startsWith('http')) {
+      return url; // Nếu đã là URL đầy đủ
+    }
+    return `http://localhost:8080${url}`; 
+  }
+
+  private getSafeDisplayImage(product: Product): string {
+    const defaultPlaceholder = 'assets/images/default-product.png';
+    let imageUrl = '';
+
+    // 1. Ưu tiên ảnh Gallery đầu tiên
+    if (product.images && product.images.length > 0) {
+      imageUrl = this.getFullImageUrl(product.images[0]);
+    }
+    
+    // 2. Nếu Gallery rỗng, thử lấy Ảnh Bìa
+    if (!imageUrl || imageUrl.endsWith('default-product.png')) { 
+      imageUrl = this.getFullImageUrl(product.image);
+    }
+    
+    // 3. Nếu cả hai đều rỗng, dùng ảnh mặc định
+    return imageUrl || defaultPlaceholder;
   }
 }

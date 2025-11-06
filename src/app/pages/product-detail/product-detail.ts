@@ -207,7 +207,7 @@ export class ProductDetail implements OnInit {
     if (!this.authService.currentUserValue || !this.product?.id) {
       return false;
     }
-    return this.authService.currentUserValue.wishlist?.includes(Number(this.product.id)) || false;
+    return this.authService.currentUserValue.wishlist?.includes((this.product.id)) || false;
   }
 
   getDiscountPercent(): number {

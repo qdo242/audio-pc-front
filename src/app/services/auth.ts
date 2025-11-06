@@ -178,12 +178,21 @@ resetPassword(email: string, otpCode: string, newPassword: string): Observable<F
   }
 
   // Đổi mật khẩu
+  // changePassword(passwordData: ChangePasswordRequest): Observable<{ success: boolean; message: string }> {
+  //   return this.http.post<{ success: boolean; message: string }>(`${this.apiUrl}/auth/change-password`, passwordData);
+  // }
   changePassword(passwordData: ChangePasswordRequest): Observable<{ success: boolean; message: string }> {
-    return this.http.post<{ success: boolean; message: string }>(`${this.apiUrl}/auth/change-password`, passwordData);
+    // SỬA: API này GIỜ ĐÃ TỒN TẠI ở UserController
+    return this.http.post<{ success: boolean; message: string }>(
+      `${this.apiUrl}/users/${this.currentUser?.id}/change-password`, 
+      passwordData
+    );
   }
+  
 
   // Wishlist
   addToWishlist(productId: string): Observable<{ success: boolean; message: string }> {
+    // SỬA: API đã đúng, bỏ Number()
     return this.http.post<{ success: boolean; message: string }>(
       `${this.apiUrl}/users/${this.currentUser?.id}/wishlist/${productId}`, 
       {}
@@ -193,8 +202,8 @@ resetPassword(email: string, otpCode: string, newPassword: string): Observable<F
           if (!this.currentUser.wishlist) {
             this.currentUser.wishlist = [];
           }
-          if (!this.currentUser.wishlist.includes(Number(productId))) {
-            this.currentUser.wishlist.push(Number(productId));
+          if (!this.currentUser.wishlist.includes(productId)) { // Bỏ Number()
+            this.currentUser.wishlist.push(productId); // Bỏ Number()
             this.currentUserSubject.next(this.currentUser);
             localStorage.setItem(this.USER_KEY, JSON.stringify(this.currentUser));
           }
@@ -204,12 +213,13 @@ resetPassword(email: string, otpCode: string, newPassword: string): Observable<F
   }
 
   removeFromWishlist(productId: string): Observable<{ success: boolean; message: string }> {
+    // SỬA: API đã đúng, bỏ Number()
     return this.http.delete<{ success: boolean; message: string }>(
       `${this.apiUrl}/users/${this.currentUser?.id}/wishlist/${productId}`
     ).pipe(
       tap(response => {
         if (response.success && this.currentUser?.wishlist) {
-          this.currentUser.wishlist = this.currentUser.wishlist.filter(id => id !== Number(productId));
+          this.currentUser.wishlist = this.currentUser.wishlist.filter(id => id !== productId); // Bỏ Number()
           this.currentUserSubject.next(this.currentUser);
           localStorage.setItem(this.USER_KEY, JSON.stringify(this.currentUser));
         }
@@ -217,8 +227,9 @@ resetPassword(email: string, otpCode: string, newPassword: string): Observable<F
     );
   }
 
-  getWishlist(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/users/${this.currentUser?.id}/wishlist`);
+  // SỬA: API đã đúng
+  getWishlist(): Observable<{success: boolean, wishlist: string[]}> {
+    return this.http.get<{success: boolean, wishlist: string[]}>(`${this.apiUrl}/users/${this.currentUser?.id}/wishlist`);
   }
 
   // Helper methods

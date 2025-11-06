@@ -1,5 +1,5 @@
 export interface User {
-  id: number;
+  id: string;
   email: string;
   name: string;
   phone?: string;
@@ -9,7 +9,7 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
   orders?: any[];
-  wishlist?: number[];
+  wishlist?: string[];
 }
 
 export interface LoginRequest {

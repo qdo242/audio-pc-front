@@ -6,7 +6,7 @@ export interface Product {
   image: string; 
   images?: string[];
   category: string;
-  subCategory: string;
+  //subCategory: string;
   brand: string;
   description: string;
   features: string[];
@@ -21,7 +21,7 @@ export interface Product {
   colors?: string[];
   weight?: string;
   batteryLife?: string;
-  connectivity?: string[];
+  connectivity?: string;
   warranty?: string;
   material?: string;
   dimensions?: string;

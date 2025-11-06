@@ -1,0 +1,75 @@
+<div class="profile-page">
+  <div class="container">
+    <div class="profile-layout">
+      
+      <app-account-sidebar [activePage]="'orders'"></app-account-sidebar>
+
+      <main class="profile-content">
+        <div class="order-history-tab">
+          <h1 class="page-title">Lịch sử đơn hàng</h1>
+          <p class="page-subtitle">Theo dõi tất cả các đơn hàng đã đặt của bạn tại đây.</p>
+
+          @if (isLoading) {
+            <div class="loading-state">
+              <div class="loading-spinner"></div>
+              <p>Đang tải lịch sử đơn hàng...</p>
+            </div>
+          } @else {
+            @if (orders.length > 0) {
+              <div class="order-list">
+                
+                @for (order of orders; track order.id) {
+                  <div class="order-card">
+                    <div class="order-header">
+                      <div class="order-id-date">
+                        <strong class="order-id">Ngày đặt: {{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+                      </div>
+                      <div class="order-status">
+                        <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+                          {{ getStatusText(order.status) }}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div class="order-items-list">
+                      @for (item of order.items; track item.productId) {
+                        <div class="order-item">
+                          
+                          <img [src]="getFullImageUrl(item.image)" alt="{{ item.productName }}" class="item-image">
+                          
+                          <div class="item-info">
+                            <span class="item-name">{{ item.productName }}</span>
+                            </div>
+                          <div class="item-price-qty">
+                            <span class="item-price">{{ item.price | number }}₫</span>
+                            <span class="item-qty">x {{ item.quantity }}</span>
+                          </div>
+                          <div class="item-total">
+                            {{ (item.price * item.quantity) | number }}₫
+                          </div>
+                        </div>
+                      }
+                    </div>
+
+                    <div class="order-footer">
+                      <span class="order-total-label">Tổng tiền:</span>
+                      <span class="order-total-amount">{{ order.totalAmount | number }}₫</span>
+                      <button class="btn btn-secondary btn-small">Xem chi tiết</button>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="empty-state">
+                <div class="empty-icon">📦</div>
+                <h2>Chưa có đơn hàng nào</h2>
+                <p>Bạn chưa đặt đơn hàng nào. Hãy bắt đầu mua sắm!</p>
+                <a routerLink="/products" class="btn btn-primary">Bắt đầu mua sắm</a>
+              </div>
+            }
+          }
+        </div>
+      </main>
+    </div>
+  </div>
+</div>

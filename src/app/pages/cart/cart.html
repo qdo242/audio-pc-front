@@ -34,12 +34,19 @@
             </button>
           </div>
 
-          <div class="cart-items">
+          <!-- <div class="cart-items">
             <div *ngFor="let item of cartItems; let i = index" class="cart-item">
               <div class="item-image">
                 <img [src]="item.image || 'assets/images/default-product.png'" [alt]="item.productName" />
                 <div class="item-badge" *ngIf="item.subTotal && item.subTotal > item.price">
                   🔥 Hot
+                </div>
+              </div> -->
+              <div class="cart-items">
+            <div *ngFor="let item of cartItems; let i = index" class="cart-item">
+              <div class="item-image">
+                <img [src]="getFullImageUrl(item.image)" [alt]="item.productName" />
+                <div class="item-badge" *ngIf="item.subTotal && item.subTotal > item.price">
                 </div>
               </div>
               

@@ -15,8 +15,16 @@
     }
     
     <div class="product-actions">
-      <button class="action-btn wishlist-btn" (click)="$event.stopPropagation()">
-        ♡
+      <button 
+        class="action-btn wishlist-btn" 
+        (click)="toggleWishlist($event)"
+        [class.active]="isInWishlist()"
+        [title]="isInWishlist() ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'">
+        @if(isInWishlist()) {
+          <span>❤️</span>
+        } @else {
+          <span>♡</span>
+        }
       </button>
       <button class="action-btn quick-view-btn" (click)="$event.stopPropagation()">
         👁️

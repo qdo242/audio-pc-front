@@ -39,7 +39,7 @@ export class Admin implements OnInit {
     reviewCount: 0
   };
 
-  // SỬA LỖI TS2339: Khởi tạo đầy đủ object 'stats'
+  
   stats = {
     totalProducts: 0,
     totalOrders: 0,

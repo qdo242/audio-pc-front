@@ -148,4 +148,15 @@ export class Cart implements OnInit, OnDestroy {
       }
     });
   }
+
+  getFullImageUrl(url: string | undefined): string {
+    const defaultPlaceholder = 'assets/images/default-product.png';
+    if (!url || url.trim() === '') {
+      return defaultPlaceholder; // Trả về ảnh mặc định
+    }
+    if (url.startsWith('http')) {
+      return url; 
+    }
+    return `http://localhost:8080${url}`; 
+  }
 }

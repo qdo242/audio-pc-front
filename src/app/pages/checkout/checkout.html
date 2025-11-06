@@ -34,7 +34,7 @@
                 <label for="ward">Phường/Xã</label>
                 <input type="text" id="ward" [(ngModel)]="customerInfo.ward" name="ward" class="form-input">
               </div>
-              <div class="form-group">
+              <div class="form-group full-width">
                 <label for="note">Ghi chú (Tùy chọn)</label>
                 <textarea id="note" [(ngModel)]="customerInfo.note" name="note" class="form-input" rows="3"></textarea>
               </div>
@@ -52,7 +52,7 @@
                     <div class="payment-title">Thanh toán khi nhận hàng (COD)</div>
                     <div class="payment-desc">Trả tiền mặt khi nhận được hàng</div>
                   </div>
-                  <div class="payment-check">✓</div>
+                  
                 </div>
               </label>
 
@@ -64,7 +64,7 @@
                     <div class="payment-title">Thẻ Tín dụng/Ghi nợ</div>
                     <div class="payment-desc">Thanh toán qua thẻ Visa, Master...</div>
                   </div>
-                  <div class="payment-check">✓</div>
+                  
                 </div>
               </label>
 
@@ -76,7 +76,7 @@
                     <div class="payment-title">PayPal</div>
                     <div class="payment-desc">Thanh toán qua ví PayPal</div>
                   </div>
-                  <div class="payment-check">✓</div>
+                  
                 </div>
               </label>
 
@@ -88,9 +88,21 @@
                     <div class="payment-title">Chuyển khoản ngân hàng</div>
                     <div class="payment-desc">Chuyển khoản qua VietQR/Số tài khoản</div>
                   </div>
-                  <div class="payment-check">✓</div>
+                  
                 </div>
-              </label>
+                
+                @if (paymentMethod === 'BANK_TRANSFER') {
+                  <div class="qr-code-section">
+                    <p>Quét mã QR để hoàn tất thanh toán:</p>
+                    <img src="images/qr-thank.jpg" alt="Mã QR Chuyển khoản" class="qr-image">
+                    <div class="bank-details">
+                      <strong>Ngân hàng:</strong> Điền ngân hàng<br>
+                      <strong>Số tài khoản:</strong> Điền số tài khoản<br>
+                      <strong>Chủ tài khoản:</strong> điền tên 
+                    </div>
+                  </div>
+                }
+                </label>
             </div>
           </div>
         </div>

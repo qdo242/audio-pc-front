@@ -213,3 +213,13 @@
     height: 100%;
   }
 }
+.product-actions {
+  .action-btn {
+    // ...
+    &.wishlist-btn:hover,
+    &.wishlist-btn.active { // THÊM DÒNG NÀY
+      background: #ff4757;
+      color: white;
+    }
+  }
+}

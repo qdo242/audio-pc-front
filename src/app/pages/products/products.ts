@@ -106,10 +106,11 @@ export class Products implements OnInit {
       filtered = filtered.filter(p => p.type === this.selectedType);
     }
 
+    // SỬA LỖI TS2339: Thay .some() bằng .includes()
     // Lọc theo kết nối (nếu có)
     if (this.selectedConnectivity.length > 0) {
       filtered = filtered.filter(p => 
-        p.connectivity && p.connectivity.some(conn => this.selectedConnectivity.includes(conn))
+        p.connectivity && this.selectedConnectivity.includes(p.connectivity)
       );
     }
     

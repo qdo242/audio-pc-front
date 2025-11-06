@@ -36,11 +36,11 @@ function shouldAddToken(request: HttpRequest<unknown>): boolean {
     '/api/auth/forgot-password',
     '/api/auth/verify-otp',
     '/api/auth/reset-password',
-    '/api/products'
+    
   ];
 
-  // Cho phép tất cả request đến /api/products mà không cần token
-  if (request.url.includes('/api/products')) {
+  // cho phép request GET đến /api/products mà không cần token
+  if (request.url.includes('/api/products') && request.method === 'GET') {
     return false;
   }
 
