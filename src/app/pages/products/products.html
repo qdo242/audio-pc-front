@@ -1,12 +1,10 @@
 <div class="products-page">
   <div class="container">
-    <!-- Header Section -->
     <div class="page-header">
       <h1>Sản phẩm Audio</h1>
       <p>Khám phá bộ sưu tập tai nghe và loa cao cấp</p>
     </div>
 
-    <!-- Search and Mobile Filter Toggle -->
     <div class="search-filter-bar">
       <div class="search-box">
         <input
@@ -27,28 +25,23 @@
       </button>
     </div>
 
-    <!-- Active Filters -->
     <div class="active-filters" *ngIf="hasActiveFilters()">
       <span class="active-filter-tag" *ngIf="selectedCategory !== 'all'">
         {{ getCategoryLabel(selectedCategory) }}
         <button (click)="selectedCategory = 'all'; onFilterChange()">×</button>
       </span>
-
       <span class="active-filter-tag" *ngIf="selectedBrand !== 'all'">
         {{ selectedBrand }}
         <button (click)="selectedBrand = 'all'; onFilterChange()">×</button>
       </span>
-
       <span class="active-filter-tag" *ngFor="let conn of selectedConnectivity">
         {{ getConnectivityLabel(conn) }}
         <button (click)="removeConnectivityFilter(conn)">×</button>
       </span>
-
       <span class="active-filter-tag" *ngIf="selectedType !== 'all'">
         {{ selectedType }}
         <button (click)="selectedType = 'all'; onFilterChange()">×</button>
       </span>
-
       <span class="active-filter-tag" *ngIf="searchTerm">
         "{{ searchTerm }}"
         <button (click)="searchTerm = ''; onFilterChange()">×</button>
@@ -59,16 +52,13 @@
       </button>
     </div>
 
-    <!-- Products Layout -->
     <div class="products-layout">
-      <!-- Filters Sidebar -->
       <div class="filters-sidebar" [class.active]="showMobileFilters">
         <div class="filters-header">
           <h3>Bộ lọc</h3>
           <button class="close-filters" (click)="toggleMobileFilters()">×</button>
         </div>
 
-        <!-- Category Filter -->
         <div class="filter-group">
           <h4>Danh mục</h4>
           <div class="filter-options">
@@ -86,7 +76,6 @@
           </div>
         </div>
 
-        <!-- Brand Filter -->
         <div class="filter-group" *ngIf="brands.length > 0">
           <h4>Thương hiệu</h4>
           <div class="filter-options">
@@ -115,7 +104,6 @@
           </div>
         </div>
 
-        <!-- Connectivity Filter -->
         <div class="filter-group">
           <h4>Kết nối</h4>
           <div class="filter-options">
@@ -132,7 +120,6 @@
           </div>
         </div>
 
-        <!-- Headphone Type Filter -->
         <div class="filter-group" *ngIf="headphoneTypes.length > 0 && (selectedCategory === 'headphone' || selectedCategory === 'all')">
           <h4>Loại tai nghe</h4>
           <div class="filter-options">
@@ -160,62 +147,24 @@
             </label>
           </div>
         </div>
-      </div>
-
-      <!-- Products Grid -->
-      <div class="products-grid-container">
+      </div> <div class="products-grid-container">
         <div class="products-grid-header">
           <p class="results-count">
             Hiển thị <strong>{{ getProductCount() }}</strong> sản phẩm
           </p>
         </div>
 
-        <!-- Loading State -->
         <div *ngIf="isLoading" class="loading-state">
           <div class="loading-spinner"></div>
           <p>Đang tải sản phẩm...</p>
         </div>
 
-        <!-- Products Grid -->
         <div *ngIf="!isLoading" class="products-grid">
-          <div 
-            *ngFor="let product of filteredProducts" 
-            class="product-card"
-            [routerLink]="['/product-detail', product.id]"
-          >
-            <div class="product-image">
-              <img [src]="product.image" [alt]="product.name" />
-              <div class="product-badge" *ngIf="product.originalPrice">
-                -{{ ((product.originalPrice - product.price) / product.originalPrice * 100) | number:'1.0-0' }}%
-              </div>
-            </div>
-            
-            <div class="product-info">
-              <h3 class="product-name">{{ product.name }}</h3>
-              <p class="product-brand">{{ product.brand }}</p>
-              
-              <div class="product-price">
-                <span class="current-price">{{ product.price | number }}₫</span>
-                <span *ngIf="product.originalPrice" class="original-price">
-                  {{ product.originalPrice | number }}₫
-                </span>
-              </div>
-              
-              <div class="product-rating">
-                <span class="stars">★★★★★</span>
-                <span class="rating">({{ product.rating }})</span>
-              </div>
-              
-              <div class="product-features">
-                <span *ngFor="let feature of product.features?.slice(0, 2)" class="feature-tag">
-                  {{ feature }}
-                </span>
-              </div>
-            </div>
-          </div>
+          @for (product of filteredProducts; track product.id) {
+            <app-product-card [product]="product"></app-product-card>
+          }
         </div>
 
-        <!-- Empty State -->
         <div *ngIf="!isLoading && filteredProducts.length === 0" class="empty-state">
           <div class="empty-icon">🎵</div>
           <h3>Không tìm thấy sản phẩm</h3>
@@ -224,7 +173,5 @@
             Xóa bộ lọc
           </button>
         </div>
-      </div>
-    </div>
-  </div>
+      </div> </div> </div>
 </div>

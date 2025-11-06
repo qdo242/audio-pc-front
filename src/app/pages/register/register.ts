@@ -12,7 +12,7 @@ import { AuthService } from '../../services/auth';
   styleUrl: './register.scss',
 })
 export class Register {
-    userData = {
+  userData = {
     name: '',
     email: '',
     password: '',
@@ -55,20 +55,25 @@ export class Register {
     this.errorMessage = '';
 
     this.authService.register(this.userData).subscribe({
-      next: (success) => {
+      next: (response) => {
         this.isLoading = false;
-        if (success) {
+        if (response.success) {
           this.successMessage = 'Đăng ký thành công! Đang chuyển hướng...';
           setTimeout(() => {
             this.router.navigate(['/']);
           }, 2000);
         } else {
-          this.errorMessage = 'Email đã được sử dụng. Vui lòng thử email khác.';
+          this.errorMessage = response.message || 'Đăng ký thất bại';
         }
       },
-      error: () => {
+      error: (error) => {
         this.isLoading = false;
-        this.errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại sau.';
+        if (error.status === 400) {
+          this.errorMessage = error.error?.message || 'Email đã được sử dụng';
+        } else {
+          this.errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại sau.';
+        }
+        console.error('Register error:', error);
       }
     });
   }

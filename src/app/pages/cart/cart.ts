@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { CartItem, CartService } from '../../services/cart';
 import { AuthService } from '../../services/auth';
+import { ProductService } from '../../services/product';
 
 @Component({
   selector: 'app-cart',
@@ -15,19 +16,22 @@ import { AuthService } from '../../services/auth';
   styleUrls: ['./cart.scss']
 })
 export class Cart implements OnInit, OnDestroy {
+  productsToShow: any[] = [];
   cartItems: CartItem[] = [];
   total: number = 0;
-  isLoading: boolean = true;
+  isLoading: boolean = false; // Sửa: không cần load lúc đầu
   private cartSubscription: Subscription | undefined;
 
   constructor(
     private cartService: CartService,
     public authService: AuthService,
+    private productService: ProductService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.loadCartItems();
+    this.subscribeToCart();
+    this.loadRealData(); 
   }
 
   ngOnDestroy(): void {
@@ -36,7 +40,8 @@ export class Cart implements OnInit, OnDestroy {
     }
   }
 
-  loadCartItems(): void {
+  subscribeToCart(): void {
+    this.isLoading = true;
     this.cartSubscription = this.cartService.getCartItems().subscribe({
       next: (items) => {
         this.cartItems = items;
@@ -52,7 +57,7 @@ export class Cart implements OnInit, OnDestroy {
 
   calculateTotal(): void {
     this.total = this.cartItems.reduce((sum, item) => {
-      return sum + (item.product.price * item.quantity);
+      return sum + (Number(item.price) * item.quantity); // Đảm bảo price là number khi tính
     }, 0);
   }
 
@@ -61,9 +66,10 @@ export class Cart implements OnInit, OnDestroy {
       newQuantity = 1;
     }
     
-    this.cartService.updateQuantity(item.product.id, newQuantity).subscribe({
+    // SỬA: item.productId đã là string
+    this.cartService.updateQuantityFrontend(item.productId, newQuantity).subscribe({
       next: () => {
-        this.calculateTotal();
+        // Tự động cập nhật qua subscription
       },
       error: (error: any) => {
         console.error('Error updating quantity:', error);
@@ -72,11 +78,12 @@ export class Cart implements OnInit, OnDestroy {
     });
   }
 
-  removeItem(productId: number): void {
+  removeItem(productId: string): void {
     if (confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')) {
-      this.cartService.removeFromCart(productId).subscribe({
+      // SỬA: productId đã là string
+      this.cartService.removeFromCartFrontend(productId).subscribe({
         next: () => {
-          // Cart items sẽ tự động cập nhật qua subscription
+          // Tự động cập nhật qua subscription
         },
         error: (error: any) => {
           console.error('Error removing item:', error);
@@ -88,10 +95,9 @@ export class Cart implements OnInit, OnDestroy {
 
   clearCart(): void {
     if (confirm('Bạn có chắc muốn xóa tất cả sản phẩm trong giỏ hàng?')) {
-      this.cartService.clearCart().subscribe({
+      this.cartService.clearCartFrontend().subscribe({
         next: () => {
-          this.cartItems = [];
-          this.total = 0;
+          // Tự động cập nhật qua subscription
         },
         error: (error: any) => {
           console.error('Error clearing cart:', error);
@@ -118,5 +124,28 @@ export class Cart implements OnInit, OnDestroy {
 
   continueShopping(): void {
     this.router.navigate(['/products']);
+  }
+
+  getItemTotal(item: CartItem): number {
+    return Number(item.price) * item.quantity;
+  }
+
+  loadRealData(): void {
+    
+    
+    this.productService.getNewestProducts(4).subscribe({ 
+      next: (data) => {
+       
+        this.productsToShow = data.map(p => ({
+          ...p,
+          
+          imageUrl: p.image || (p.images && p.images.length > 0 ? p.images[0] : 'assets/images/default-product.png')
+        }));
+        console.log('Tải sản phẩm gợi ý thành công:', data);
+      },
+      error: (err) => {
+        console.error('Lỗi khi tải sản phẩm gợi ý:', err);
+      }
+    });
   }
 }

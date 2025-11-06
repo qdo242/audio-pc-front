@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { CartItem, CartService } from '../../services/cart';
 import { AuthService } from '../../services/auth';
+import { OrderService, Order, OrderItem, Address } from '../../services/order';
 
 @Component({
   selector: 'app-checkout',
@@ -17,7 +18,7 @@ import { AuthService } from '../../services/auth';
 export class Checkout implements OnInit, OnDestroy {
   cartItems: CartItem[] = [];
   total: number = 0;
-  shippingFee: number = 30000; // 30,000 VND
+  shippingFee: number = 0; // 
   grandTotal: number = 0;
   isLoading: boolean = true;
 
@@ -29,15 +30,18 @@ export class Checkout implements OnInit, OnDestroy {
     city: '',
     district: '',
     ward: '',
+    country: 'Vietnam',
+    zipCode: '100000',
     note: ''
   };
 
-  paymentMethod: string = 'cod';
+  paymentMethod: 'COD' | 'CREDIT_CARD' | 'PAYPAL' | 'BANK_TRANSFER' = 'COD'; // Khớp với enum backend
   private cartSubscription: Subscription | undefined;
 
   constructor(
     private cartService: CartService,
     public authService: AuthService,
+    private orderService: OrderService,
     private router: Router
   ) {}
 
@@ -77,15 +81,15 @@ export class Checkout implements OnInit, OnDestroy {
   }
 
   calculateTotals(): void {
+    // SỬA LỖI: Dùng item.price (phẳng)
     this.total = this.cartItems.reduce((sum, item) => {
-      return sum + (item.product.price * item.quantity);
+      return sum + (Number(item.price) * Number(item.quantity));
     }, 0);
     
     this.grandTotal = this.total + this.shippingFee;
   }
 
   placeOrder(): void {
-    // Validate form
     if (!this.validateForm()) {
       return;
     }
@@ -95,33 +99,62 @@ export class Checkout implements OnInit, OnDestroy {
       return;
     }
 
-    // Tạo đơn hàng
-    const order = {
-      id: Date.now(),
-      customerInfo: { ...this.customerInfo },
-      items: this.cartItems,
-      total: this.total,
-      shippingFee: this.shippingFee,
-      grandTotal: this.grandTotal,
-      paymentMethod: this.paymentMethod,
-      status: 'pending',
-      createdAt: new Date()
+    const currentUserId = this.authService.currentUserValue?.id?.toString();
+    if (!currentUserId) {
+      alert('Lỗi xác thực người dùng. Vui lòng đăng nhập lại.');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    const shippingAddress: Address = {
+      fullName: this.customerInfo.fullName,
+      street: this.customerInfo.address + ', ' + this.customerInfo.district + ', ' + this.customerInfo.ward,
+      city: this.customerInfo.city,
+      country: this.customerInfo.country,
+      zipCode: this.customerInfo.zipCode,
+      phone: this.customerInfo.phone
     };
 
-    // Lưu đơn hàng vào localStorage (trong thực tế sẽ gọi API)
-    this.saveOrderToStorage(order);
+    const orderItems: OrderItem[] = this.cartItems.map(item => ({
+      productId: item.productId,
+      productName: item.productName,
+      price: item.price,
+      quantity: item.quantity,
+      subTotal: item.price * item.quantity, // SỬA: Thêm tính toán subTotal
+      image: item.image
+    }));
 
-    // Xóa giỏ hàng
-    this.cartService.clearCart().subscribe({
-      next: () => {
-        alert('🎉 Đặt hàng thành công! Cảm ơn bạn đã mua sắm tại AthenAudio.');
-        this.router.navigate(['/order-success'], { 
-          state: { orderId: order.id }
+    const newOrder: Order = {
+      userId: currentUserId,
+      items: orderItems,
+      totalAmount: this.grandTotal,
+      status: 'PENDING',
+      paymentMethod: this.paymentMethod,
+      shippingAddress: shippingAddress
+    };
+
+    this.isLoading = true;
+
+    this.orderService.createOrder(newOrder).subscribe({
+      next: (createdOrder) => {
+        this.cartService.clearCartFrontend(currentUserId).subscribe({
+          next: () => {
+            this.isLoading = false;
+            alert('🎉 Đặt hàng thành công! Cảm ơn bạn đã mua sắm tại AthenAudio.');
+            this.router.navigate(['/']); 
+          },
+          error: (cartError) => {
+            this.isLoading = false;
+            console.error('Lỗi khi xóa giỏ hàng:', cartError);
+            alert('Đặt hàng thành công nhưng có lỗi khi xóa giỏ hàng!');
+            this.router.navigate(['/']); 
+          }
         });
       },
-      error: (error: any) => {
-        console.error('Error clearing cart:', error);
-        alert('❌ Có lỗi xảy ra khi xử lý đơn hàng!');
+      error: (orderError) => {
+        this.isLoading = false;
+        console.error('Error creating order:', orderError);
+        alert('❌ Có lỗi xảy ra khi xử lý đơn hàng! Vui lòng thử lại.');
       }
     });
   }
@@ -135,21 +168,6 @@ export class Checkout implements OnInit, OnDestroy {
         return false;
       }
     }
-
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(this.customerInfo.email)) {
-      alert('Vui lòng nhập địa chỉ email hợp lệ!');
-      return false;
-    }
-
-    // Validate phone
-    const phoneRegex = /^(0|\+84)[3|5|7|8|9][0-9]{8}$/;
-    if (!phoneRegex.test(this.customerInfo.phone)) {
-      alert('Vui lòng nhập số điện thoại hợp lệ!');
-      return false;
-    }
-
     return true;
   }
 
@@ -165,12 +183,7 @@ export class Checkout implements OnInit, OnDestroy {
     return labels[field] || field;
   }
 
-  saveOrderToStorage(order: any): void {
-    const savedOrders = localStorage.getItem('orders');
-    const orders = savedOrders ? JSON.parse(savedOrders) : [];
-    orders.unshift(order);
-    localStorage.setItem('orders', JSON.stringify(orders));
-  }
+  
 
   goBackToCart(): void {
     this.router.navigate(['/cart']);

@@ -1,45 +1,45 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Product } from '../../interfaces/product';
 import { ProductService } from '../../services/product';
 import { AuthService } from '../../services/auth';
-
-
+import { Order, OrderService } from '../../services/order';
+import { FileService } from '../../services/file';
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, DecimalPipe],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './admin.html',
   styleUrls: ['./admin.scss']
 })
 export class Admin implements OnInit {
   products: Product[] = [];
-  orders: any[] = [];
+  orders: Order[] = []; 
   activeTab: string = 'products';
   
-  // Product Form
   showProductForm = false;
   editingProduct: Product | null = null;
+  isUploading: boolean = false; 
   
-  productForm = {
+  productForm: Partial<Product> = {
     name: '',
     price: 0,
     originalPrice: 0,
     category: 'headphone',
-    subCategory: 'wireless',
     brand: 'Atheng Audio',
     description: '',
-    features: [''],
-    inStock: true,
-    rating: 4.5,
-    reviews: 0,
-    connectivity: ['wireless'],
-    type: 'earbuds'
+    image: '',
+    images: [''],
+    stock: 100,
+    isActive: true, 
+    isFeatured: false,
+    rating: 0,
+    reviewCount: 0
   };
 
-  // Stats
+  // SỬA LỖI TS2339: Khởi tạo đầy đủ object 'stats'
   stats = {
     totalProducts: 0,
     totalOrders: 0,
@@ -49,95 +49,84 @@ export class Admin implements OnInit {
 
   constructor(
     private productService: ProductService,
+    private orderService: OrderService,
     public authService: AuthService,
+    private fileService: FileService, 
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.loadProducts();
     this.loadOrders();
-    this.calculateStats();
+  }
+
+  // SỬA: THÊM HÀM HELPER NÀY (Fix ảnh vỡ ở bảng admin)
+  getFullImageUrl(url: string | undefined): string {
+    const defaultPlaceholder = 'assets/images/default-product.png';
+    if (!url || url.trim() === '') {
+      return ''; // Sẽ được hàm fallback xử lý
+    }
+    if (url.startsWith('http')) {
+      return url;
+    }
+    return `http://localhost:8080${url}`; 
+  }
+
+  // SỬA: Logic thông minh để chọn ảnh (Ưu tiên ảnh bìa)
+  getSafeDisplayImage(product: Product): string {
+    const defaultPlaceholder = 'assets/images/default-product.png';
+    let imageUrl = this.getFullImageUrl(product.image);
+    
+    if (!imageUrl || imageUrl.endsWith('default-product.png')) { 
+      if (product.images && product.images.length > 0) {
+        const firstGalleryImage = this.getFullImageUrl(product.images[0]);
+        if (firstGalleryImage && !firstGalleryImage.endsWith('default-product.png')) {
+          imageUrl = firstGalleryImage;
+        }
+      }
+    }
+    return imageUrl || defaultPlaceholder;
   }
 
   loadProducts(): void {
-    this.productService.getProducts().subscribe({
+    this.productService.getAllProducts().subscribe({
       next: (products) => {
-        this.products = products;
+        // SỬA: Dùng map để sửa URL ảnh (ảnh 1860a7.png)
+        this.products = products.map(p => ({
+          ...p,
+          image: this.getSafeDisplayImage(p) // Dùng logic thông minh
+        }));
         this.calculateStats();
       },
-      error: (error) => {
-        console.error('Error loading products:', error);
-      }
+      error: (error) => console.error('Error loading products:', error)
     });
   }
 
   loadOrders(): void {
-    // Load orders from localStorage (in real app, from API)
-    const savedOrders = localStorage.getItem('orders');
-    this.orders = savedOrders ? JSON.parse(savedOrders) : this.getMockOrders();
-    this.calculateStats();
-  }
-
-  getMockOrders(): any[] {
-    return [
-      {
-        id: 1,
-        customerName: 'Nguyễn Văn A',
-        customerEmail: 'a@example.com',
-        customerPhone: '0123456789',
-        items: [
-          { productId: 1, name: 'AirPods Pro 2', price: 6990000, quantity: 1 },
-          { productId: 3, name: 'Sony WH-1000XM5', price: 8990000, quantity: 1 }
-        ],
-        total: 15980000,
-        status: 'completed',
-        createdAt: new Date('2024-01-15'),
-        shippingAddress: '123 Đường ABC, Quận 1, TP.HCM'
+    this.orderService.getAllOrders().subscribe({
+      next: (orders) => {
+        this.orders = orders;
+        this.calculateStats();
       },
-      {
-        id: 2,
-        customerName: 'Trần Thị B',
-        customerEmail: 'b@example.com',
-        customerPhone: '0987654321',
-        items: [
-          { productId: 8, name: 'HomePod Mini', price: 3990000, quantity: 2 }
-        ],
-        total: 7980000,
-        status: 'pending',
-        createdAt: new Date('2024-01-16'),
-        shippingAddress: '456 Đường XYZ, Quận 2, TP.HCM'
-      },
-      {
-        id: 3,
-        customerName: 'Lê Văn C',
-        customerEmail: 'c@example.com',
-        customerPhone: '0912345678',
-        items: [
-          { productId: 4, name: 'Sony WF-1000XM4', price: 4990000, quantity: 1 },
-          { productId: 9, name: 'Sony SRS-XB43', price: 3490000, quantity: 1 }
-        ],
-        total: 8480000,
-        status: 'cancelled',
-        createdAt: new Date('2024-01-14'),
-        shippingAddress: '789 Đường DEF, Quận 3, TP.HCM'
+      error: (error) => {
+        console.error('Error loading orders:', error);
       }
-    ];
+    });
   }
 
   calculateStats(): void {
     this.stats.totalProducts = this.products.length;
     this.stats.totalOrders = this.orders.length;
     this.stats.totalRevenue = this.orders
-      .filter(order => order.status === 'completed')
-      .reduce((sum, order) => sum + order.total, 0);
-    this.stats.outOfStock = this.products.filter(p => !p.inStock).length;
+      .filter(order => order.status === 'DELIVERED') 
+      .reduce((sum, order) => sum + order.totalAmount, 0);
+    this.stats.outOfStock = this.products.filter(p => (p.stock || 0) <= 0).length;
   }
 
   setActiveTab(tab: string): void {
     this.activeTab = tab;
   }
 
-  // Product Management
   addProduct(): void {
     this.editingProduct = null;
     this.productForm = {
@@ -145,82 +134,61 @@ export class Admin implements OnInit {
       price: 0,
       originalPrice: 0,
       category: 'headphone',
-      subCategory: 'wireless',
       brand: 'Atheng Audio',
       description: '',
-      features: [''],
-      inStock: true,
-      rating: 4.5,
-      reviews: 0,
-      connectivity: ['wireless'],
-      type: 'earbuds'
+      image: '',
+      images: [''],
+      stock: 100,
+      isActive: true,
+      isFeatured: false,
+      rating: 0,
+      reviewCount: 0
     };
     this.showProductForm = true;
   }
 
   editProduct(product: Product): void {
-  this.editingProduct = product;
-  this.productForm = { 
-    name: product.name,
-    price: product.price,
-    originalPrice: product.originalPrice || 0,
-    category: product.category,
-    subCategory: product.subCategory || 'wireless',
-    brand: product.brand,
-    description: product.description,
-    features: [...(product.features || [''])],
-    inStock: product.inStock,
-    rating: product.rating,
-    reviews: product.reviews,
-    connectivity: [product.subCategory || 'wireless'],
-    type: product.type || 'earbuds'
-  };
-  this.showProductForm = true;
-}
+    this.editingProduct = product;
+    this.productForm = { 
+      ...product,
+      images: (product.images && product.images.length > 0) ? [...product.images] : ['']
+    };
+    this.showProductForm = true;
+  }
 
   saveProduct(): void {
-  if (this.editingProduct) {
-    // Update existing product
-    this.productService.updateProduct(this.editingProduct.id, this.productForm).subscribe({
-      next: () => {
-        this.showProductForm = false;
-        this.loadProducts();
-      },
-      error: (error) => {
-        console.error('Error updating product:', error);
-      }
-    });
-  } else {
-    // Add new product
-    const newProduct: Product = {
-      id: Date.now(),
-      image: 'assets/images/default-product.png',
-      ...this.productForm,
-      originalPrice: this.productForm.originalPrice || undefined,
-      subCategory: this.productForm.connectivity[0] || 'wireless'
-    };
+    if (this.productForm.images) {
+      this.productForm.images = this.productForm.images.filter(url => url && url.trim() !== '');
+    }
     
-    this.productService.addProduct(newProduct).subscribe({
-      next: () => {
-        this.showProductForm = false;
-        this.loadProducts();
-      },
-      error: (error) => {
-        console.error('Error adding product:', error);
-      }
-    });
-  }
-}
-
-  deleteProduct(productId: number): void {
-    if (confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-      this.productService.deleteProduct(productId).subscribe({
+    if (this.editingProduct && this.editingProduct.id) {
+      this.productService.updateProduct(this.editingProduct.id, this.productForm).subscribe({
         next: () => {
+          this.showProductForm = false;
           this.loadProducts();
         },
-        error: (error) => {
-          console.error('Error deleting product:', error);
-        }
+        error: (error) => console.error('Error updating product:', error)
+      });
+    } else {
+      const newProductData: Partial<Product> = { ...this.productForm };
+      delete newProductData.id; 
+      
+      this.productService.createProduct(newProductData).subscribe({
+        next: () => {
+          this.showProductForm = false;
+          this.loadProducts();
+        },
+        error: (error) => console.error('Error adding product:', error)
+      });
+    }
+  }
+
+  deleteProduct(productId: string | undefined): void { 
+    if (!productId) return;
+    if (confirm('Bạn có chắc muốn xóa (ẩn) sản phẩm này?')) {
+      this.productService.deleteProduct(productId).subscribe({
+        next: () => this.loadProducts(),
+        error: (error) => console.error('Error deleting product:', error)
       });
     }
   }
@@ -230,101 +198,111 @@ export class Admin implements OnInit {
     this.editingProduct = null;
   }
 
-  addFeature(): void {
-    this.productForm.features.push('');
+  onFileSelected(event: Event, fieldType: 'image' | 'images', index?: number): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) {
+      return;
+    }
+    const file = input.files[0];
+    this.isUploading = true;
+    input.disabled = true; 
+
+    this.fileService.upload(file).subscribe({
+      next: (response) => {
+        if (response.success && response.url) {
+          const fullUrl = `http://localhost:8080${response.url}`; 
+          
+          if (fieldType === 'image') {
+            this.productForm.image = fullUrl;
+          } 
+          else if (fieldType === 'images' && index !== undefined && this.productForm.images) {
+            this.productForm.images[index] = fullUrl;
+          }
+          alert('Tải ảnh thành công!');
+        } else {
+          // SỬA LỖI TS2349: Thêm dấu +
+          alert('Upload thất bại: ' + (response.message || 'Không rõ lỗi'));
+        }
+        this.isUploading = false;
+        input.disabled = false;
+        input.value = ''; 
+      },
+      error: (err) => {
+        console.error('Upload error:', err);
+        alert('Lỗi nghiêm trọng khi upload file.');
+        this.isUploading = false;
+        input.disabled = false;
+        input.value = ''; 
+      }
+    });
   }
 
-  removeFeature(index: number): void {
-    this.productForm.features.splice(index, 1);
+  addImageField(): void {
+    if (!this.productForm.images) {
+      this.productForm.images = [];
+    }
+    this.productForm.images.push('');
+  }
+
+  removeImageField(index: number): void {
+    this.productForm.images?.splice(index, 1);
   }
 
   trackByFn(index: number, item: any): any {
     return index;
   }
 
-  // Order Management
-  updateOrderStatus(orderId: number, event: Event): void {
+  updateOrderStatus(orderId: string | undefined, event: Event): void {
+    if (!orderId) return;
     const target = event.target as HTMLSelectElement;
-    const status = target.value;
+    const status = target.value as Order['status'];
     
+    this.orderService.updateOrderStatus(orderId, status).subscribe({
+      next: () => this.loadOrders(),
+      error: (error) => console.error('Error updating order status:', error)
+    });
+  }
+
+  viewOrder(orderId: string | undefined): void {
+    if (!orderId) return;
     const order = this.orders.find(o => o.id === orderId);
     if (order) {
-      order.status = status;
-      order.updatedAt = new Date();
-      localStorage.setItem('orders', JSON.stringify(this.orders));
-      this.loadOrders();
+      alert(`Chi tiết đơn hàng #${orderId}\nKhách hàng: ${order.shippingAddress.fullName}\nTổng tiền: ${order.totalAmount.toLocaleString()}₫\nTrạng thái: ${this.getStatusText(order.status)}`);
     }
   }
 
-  viewOrder(orderId: number): void {
-    const order = this.orders.find(o => o.id === orderId);
-    if (order) {
-      alert(`Chi tiết đơn hàng #${orderId}\nKhách hàng: ${order.customerName}\nTổng tiền: ${order.total.toLocaleString()}₫\nTrạng thái: ${this.getStatusText(order.status)}`);
-    }
-  }
-
-  deleteOrder(orderId: number): void {
-    if (confirm('Bạn có chắc muốn xóa đơn hàng này?')) {
-      this.orders = this.orders.filter(o => o.id !== orderId);
-      localStorage.setItem('orders', JSON.stringify(this.orders));
-      this.loadOrders();
+  deleteOrder(orderId: string | undefined): void {
+    if (!orderId) return;
+    if (confirm('Bạn có chắc muốn xóa vĩnh viễn đơn hàng này?')) {
+      this.orderService.deleteOrder(orderId).subscribe({
+        next: () => this.loadOrders(),
+        error: (error) => console.error('Error deleting order:', error)
+      });
     }
   }
 
   getStatusText(status: string): string {
     const statusMap: { [key: string]: string } = {
-      pending: 'Chờ xử lý',
-      completed: 'Hoàn thành',
-      cancelled: 'Đã hủy',
-      processing: 'Đang xử lý',
-      shipped: 'Đã giao hàng'
+      PENDING: 'Chờ xử lý',
+      CONFIRMED: 'Đã xác nhận',
+      PROCESSING: 'Đang xử lý',
+      SHIPPED: 'Đã giao hàng',
+      DELIVERED: 'Đã nhận',
+      CANCELLED: 'Đã hủy'
     };
     return statusMap[status] || status;
   }
 
   getStatusColor(status: string): string {
-    const colors: { [key: string]: string } = {
-      pending: '#fbbf24',
-      completed: '#10b981',
-      cancelled: '#ef4444',
-      processing: '#3b82f6',
-      shipped: '#8b5cf6'
+    const colors: { [key:string]: string } = {
+      PENDING: '#fbbf24',
+      CONFIRMED: '#3b82f6',
+      PROCESSING: '#3b82f6',
+      SHIPPED: '#8b5cf6',
+      DELIVERED: '#10b981',
+      CANCELLED: '#ef4444'
     };
     return colors[status] || '#6b7280';
-  }
-
-  // Category options for form
-  categories = [
-    { value: 'headphone', label: 'Tai nghe' },
-    { value: 'speaker', label: 'Loa' }
-  ];
-
-  connectivityOptions = [
-    { value: 'wireless', label: 'Không dây' },
-    { value: 'wired', label: 'Có dây' },
-    { value: 'both', label: 'Cả hai' }
-  ];
-
-  headphoneTypes = [
-    { value: 'earbuds', label: 'Tai nghe trong tai' },
-    { value: 'over-ear', label: 'Tai nghe chụp tai' },
-    { value: 'on-ear', label: 'Tai nghe đặt trên tai' },
-    { value: 'gaming', label: 'Tai nghe gaming' },
-    { value: 'studio', label: 'Tai nghe studio' }
-  ];
-
-  brands = [
-    'Apple', 'Sony', 'Samsung', 'Bose', 'JBL', 
-    'Beats', 'Audio-Technica', 'Sennheiser', 'Atheng Audio'
-  ];
-
-  // User Management (placeholder)
-  getUsers(): any[] {
-    return [
-      { id: 1, name: 'Nguyễn Văn A', email: 'a@example.com', role: 'user', joinedDate: '2024-01-01' },
-      { id: 2, name: 'Trần Thị B', email: 'b@example.com', role: 'user', joinedDate: '2024-01-02' },
-      { id: 3, name: 'Admin User', email: 'admin@athenaudio.com', role: 'admin', joinedDate: '2024-01-01' }
-    ];
   }
 
   logout(): void {

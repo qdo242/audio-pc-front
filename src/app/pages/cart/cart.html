@@ -1,18 +1,15 @@
 <div class="cart-page">
   <div class="container">
-    <!-- Header -->
     <div class="page-header">
       <h1>🛒 Giỏ Hàng Của Bạn</h1>
       <p>Kiểm tra và chỉnh sửa sản phẩm trước khi thanh toán</p>
     </div>
 
-    <!-- Loading State -->
     <div *ngIf="isLoading" class="loading-state">
       <div class="loading-spinner"></div>
       <p>Đang tải giỏ hàng...</p>
     </div>
 
-    <!-- Empty Cart -->
     <div *ngIf="!isLoading && cartItems.length === 0" class="empty-cart">
       <div class="empty-icon">📦</div>
       <h2>Giỏ hàng của bạn đang trống</h2>
@@ -27,13 +24,11 @@
       </div>
     </div>
 
-    <!-- Cart Content -->
     <div *ngIf="!isLoading && cartItems.length > 0" class="cart-content">
       <div class="cart-layout">
-        <!-- Cart Items -->
         <div class="cart-items-section">
           <div class="section-header">
-            <h2>Sản phẩm ({{ cartItems.length }})</h2>
+            <h2>Sản phẩm trong giỏ ({{ cartItems.length }})</h2>
             <button class="btn-clear" (click)="clearCart()">
               🗑️ Xóa tất cả
             </button>
@@ -42,27 +37,24 @@
           <div class="cart-items">
             <div *ngFor="let item of cartItems; let i = index" class="cart-item">
               <div class="item-image">
-                <img [src]="item.product.image" [alt]="item.product.name" />
-                <div class="item-badge" *ngIf="item.product.originalPrice">
-                  -{{ ((item.product.originalPrice - item.product.price) / item.product.originalPrice * 100) | number:'1.0-0' }}%
+                <img [src]="item.image || 'assets/images/default-product.png'" [alt]="item.productName" />
+                <div class="item-badge" *ngIf="item.subTotal && item.subTotal > item.price">
+                  🔥 Hot
                 </div>
               </div>
               
               <div class="item-details">
-                <h3 class="item-name">{{ item.product.name }}</h3>
-                <p class="item-brand">{{ item.product.brand }}</p>
+                <h3 class="item-name">{{ item.productName }}</h3>
+                <p class="item-sku">Mã SP: {{ item.productId }}</p>
                 <div class="item-features">
-                  <span *ngFor="let feature of item.product.features?.slice(0, 2)" class="feature-tag">
-                    {{ feature }}
-                  </span>
+                  <span class="feature-tag">Chính hãng</span>
+                  <span class="feature-tag">Bảo hành 2 năm</span>
                 </div>
               </div>
 
               <div class="item-price">
-                <div class="current-price">{{ item.product.price | number }}₫</div>
-                <div class="original-price" *ngIf="item.product.originalPrice">
-                  {{ item.product.originalPrice | number }}₫
-                </div>
+                <div class="current-price">{{ item.price | number }}₫</div>
+                <div class="unit-price">đơn giá</div>
               </div>
 
               <div class="quantity-controls">
@@ -77,25 +69,44 @@
               </div>
 
               <div class="item-total">
-                <div class="total-amount">{{ (item.product.price * item.quantity) | number }}₫</div>
-                <div class="unit-price">{{ item.product.price | number }}₫/sản phẩm</div>
+                <div class="total-amount">{{ getItemTotal(item) | number }}₫</div>
+                <div class="savings" *ngIf="item.quantity > 1">
+                  Tiết kiệm: {{ (getItemTotal(item) - item.price) | number }}₫
+                </div>
               </div>
 
-              <button class="remove-btn" (click)="removeItem(item.product.id)" title="Xóa sản phẩm">
+              <button class="remove-btn" (click)="removeItem(item.productId)" title="Xóa sản phẩm">
                 <span class="remove-icon">×</span>
               </button>
             </div>
           </div>
+
+          <div class="cart-summary-mobile">
+            <div class="summary-row">
+              <span>Tạm tính:</span>
+              <span>{{ total | number }}₫</span>
+            </div>
+            <div class="summary-row">
+              <span>Phí vận chuyển:</span>
+              <span class="free-shipping">Miễn phí</span>
+            </div>
+            <div class="summary-row total">
+              <strong>Tổng cộng:</strong>
+              <strong class="total-amount">{{ total | number }}₫</strong>
+            </div>
+            <button class="btn-checkout-mobile" (click)="proceedToCheckout()">
+              🎉 Thanh toán ngay
+            </button>
+          </div>
         </div>
 
-        <!-- Order Summary -->
         <div class="order-summary">
           <div class="summary-card">
             <h3>📋 Tóm tắt đơn hàng</h3>
             
             <div class="summary-details">
               <div class="summary-row">
-                <span>Tạm tính:</span>
+                <span>Tạm tính ({{ cartItems.length }} sản phẩm):</span>
                 <span>{{ total | number }}₫</span>
               </div>
               
@@ -104,9 +115,9 @@
                 <span class="free-shipping">Miễn phí</span>
               </div>
               
-              <div class="summary-row">
+              <div class="summary-row discount">
                 <span>Giảm giá:</span>
-                <span class="discount">-0₫</span>
+                <span class="discount-amount">-0₫</span>
               </div>
               
               <div class="divider"></div>
@@ -114,6 +125,11 @@
               <div class="summary-row total">
                 <strong>Tổng thanh toán:</strong>
                 <strong class="total-amount">{{ total | number }}₫</strong>
+              </div>
+
+              <div class="savings-notice" *ngIf="total > 500000">
+                <span class="savings-icon">💰</span>
+                <span>Bạn đã tiết kiệm được {{ (total * 0.1) | number }}₫</span>
               </div>
             </div>
 
@@ -144,10 +160,84 @@
                 <span class="badge-icon">🔄</span>
                 <span>Đổi trả 30 ngày</span>
               </div>
+              <div class="badge">
+                <span class="badge-icon">🏆</span>
+                <span>Chính hãng 100%</span>
+              </div>
+            </div>
+
+            <div class="promotion-section">
+              <div class="promotion-header">
+                <span class="promotion-icon">🎁</span>
+                <span>Mã giảm giá</span>
+              </div>
+              <div class="promotion-input">
+                <input type="text" placeholder="Nhập mã giảm giá..." class="promotion-code">
+                <button class="btn-apply">Áp dụng</button>
+              </div>
+              <div class="promotion-suggestions">
+                <span class="promotion-tag" *ngFor="let code of ['SALE10', 'WELCOME5', 'FREESHIP']">
+                  {{ code }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="trust-indicators">
+            <div class="trust-item">
+              <span class="trust-icon">⭐</span>
+              <div class="trust-text">
+                <strong>10,000+</strong>
+                <span>Khách hàng hài lòng</span>
+              </div>
+            </div>
+            <div class="trust-item">
+              <span class="trust-icon">🚀</span>
+              <div class="trust-text">
+                <strong>Giao hàng nhanh</strong>
+                <span>2-4 giờ nội thành</span>
+              </div>
+            </div>
+            <div class="trust-item">
+              <span class="trust-icon">📞</span>
+              <div class="trust-text">
+                <strong>Hỗ trợ 24/7</strong>
+                <span>1900 1234</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      
+      
+        <div class="recently-viewed">
+  
+  <h3 class="section-title">Sản phẩm vừa xem</h3>
+  
+  <div class="recent-products">
+    
+    <div class="recent-product" *ngFor="let product of productsToShow">
+      
+      <div class="product-image">
+        <img [src]="product.imageUrl" [alt]="product.name">
+      </div>
+      
+      <div class="product-info">
+        <h4>{{ product.name }}</h4>
+        <div class="product-price">
+          <span class="current-price">{{ product.price | number }}₫</span>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!productsToShow || productsToShow.length === 0">
+        <p>Không tìm thấy sản phẩm nào.</p>
+    </div>
+
+  </div>
+</div>
+
     </div>
   </div>
 </div>

@@ -66,12 +66,15 @@ export class Header implements OnInit, OnDestroy {
     this.authService.logout().subscribe({
       next: (response) => {
         this.isUserMenuOpen = false;
-        alert(response.message);
         this.router.navigate(['/home']);
       },
       error: (error: any) => {
         console.error('Logout error:', error);
-        alert('Có lỗi xảy ra khi đăng xuất!');
+        this.isUserMenuOpen = false;
+        // Clear storage locally nếu API fail
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('currentUser');
+        this.router.navigate(['/home']);
       }
     });
   }

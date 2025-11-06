@@ -1,6 +1,5 @@
 <div class="admin-page">
   <div class="container">
-    <!-- Admin Header -->
     <div class="admin-header">
       <h1 class="page-title">Quản Lý Atheng Audio</h1>
       <div class="admin-actions">
@@ -15,19 +14,18 @@
       </div>
     </div>
 
-    <!-- Admin Stats -->
     <div class="admin-stats">
       <div class="stat-card">
         <div class="stat-icon">📦</div>
         <div class="stat-info">
-          <div class="stat-number">{{ stats.totalProducts }}</div>
+          <div class="stat-number">{{ stats.totalProducts | number }}</div>
           <div class="stat-label">Tổng Sản Phẩm</div>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">🛒</div>
         <div class="stat-info">
-          <div class="stat-number">{{ stats.totalOrders }}</div>
+          <div class="stat-number">{{ stats.totalOrders | number }}</div>
           <div class="stat-label">Đơn Hàng</div>
         </div>
       </div>
@@ -41,13 +39,12 @@
       <div class="stat-card">
         <div class="stat-icon">⚠️</div>
         <div class="stat-info">
-          <div class="stat-number">{{ stats.outOfStock }}</div>
+          <div class="stat-number">{{ stats.outOfStock | number }}</div>
           <div class="stat-label">Hết Hàng</div>
         </div>
       </div>
     </div>
 
-    <!-- Admin Tabs -->
     <div class="admin-tabs">
       <div class="tab-headers">
         <button 
@@ -67,10 +64,8 @@
       </div>
 
       <div class="tab-content">
-        <!-- Products Tab -->
         @if (activeTab === 'products') {
           <div class="tab-pane">
-            <!-- Product List -->
             <div class="products-table">
               <div class="table-header">
                 <h3>Danh Sách Sản Phẩm ({{ products.length }})</h3>
@@ -89,7 +84,7 @@
                 @for (product of products; track product.id) {
                   <div class="table-row">
                     <div class="col col-image">
-                      <img [src]="product.image" [alt]="product.name" class="product-thumb">
+                      <img [src]="product.image || 'assets/images/default-product.png'" [alt]="product.name" class="product-thumb">
                     </div>
                     <div class="col col-name">
                       <div class="product-name">{{ product.name }}</div>
@@ -105,8 +100,8 @@
                       <span class="category-badge">{{ product.category }}</span>
                     </div>
                     <div class="col col-stock">
-                      @if (product.inStock) {
-                        <span class="status-badge in-stock">Còn Hàng</span>
+                      @if (product.stock > 0) {
+                        <span class="status-badge in-stock">Còn Hàng ({{product.stock}})</span>
                       } @else {
                         <span class="status-badge out-of-stock">Hết Hàng</span>
                       }
@@ -126,10 +121,8 @@
           </div>
         }
 
-        <!-- Orders Tab -->
         @if (activeTab === 'orders') {
           <div class="tab-pane">
-            <!-- Orders List -->
             <div class="orders-table">
               <div class="table-header">
                 <h3>Danh Sách Đơn Hàng ({{ orders.length }})</h3>
@@ -152,14 +145,14 @@
                       #{{ order.id }}
                     </div>
                     <div class="col col-customer">
-                      <div class="customer-name">{{ order.customer.fullName }}</div>
-                      <div class="customer-phone">{{ order.customer.phone }}</div>
+                      <div class="customer-name">{{ order.shippingAddress.fullName }}</div>
+                      <div class="customer-phone">{{ order.shippingAddress.phone }}</div>
                     </div>
                     <div class="col col-items">
                       <div class="items-count">{{ order.items.length }} sản phẩm</div>
                       <div class="items-preview">
-                        @for (item of order.items.slice(0, 2); track item.product.id) {
-                          <span class="item-name">{{ item.product.name }}</span>
+                        @for (item of order.items.slice(0, 2); track item.productId) {
+                          <span class="item-name">{{ item.productName }}</span>
                         }
                         @if (order.items.length > 2) {
                           <span class="more-items">+{{ order.items.length - 2 }} sản phẩm khác</span>
@@ -167,7 +160,7 @@
                       </div>
                     </div>
                     <div class="col col-total">
-                      {{ order.total | number }}₫
+                      {{ order.totalAmount | number }}₫
                     </div>
                     <div class="col col-status">
                       <select 
@@ -176,9 +169,12 @@
                             class="status-select"
                             [style.background]="getStatusColor(order.status)"
                         >
-                        <option value="pending">Chờ xử lý</option>
-                        <option value="completed">Hoàn thành</option>
-                        <option value="cancelled">Đã hủy</option>
+                        <option value="PENDING">Chờ xử lý</option>
+                        <option value="CONFIRMED">Đã xác nhận</option>
+                        <option value="PROCESSING">Đang xử lý</option>
+                        <option value="SHIPPED">Đã giao hàng</option>
+                        <option value="DELIVERED">Đã nhận</option>
+                        <option value="CANCELLED">Đã hủy</option>
                       </select>
                     </div>
                     <div class="col col-date">
@@ -203,12 +199,14 @@
             </div>
           </div>
         }
-      </div>
-    </div>
-
-    <!-- Product Form Modal -->
-    @if (showProductForm) {
-      <div class="modal-overlay">
+      </div> </div> @if (showProductForm) {
+      <div class="modal-overlay" [class.uploading]="isUploading">
+        @if (isUploading) {
+          <div class="upload-spinner">
+            <div class="spinner-icon"></div>
+            <span>Đang tải ảnh lên...</span>
+          </div>
+        }
         <div class="modal-content">
           <div class="modal-header">
             <h2>{{ editingProduct ? 'Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới' }}</h2>
@@ -218,124 +216,104 @@
           <div class="modal-body">
             <form (ngSubmit)="saveProduct()" class="product-form">
               <div class="form-grid">
+                
                 <div class="form-group">
                   <label class="form-label">Tên Sản Phẩm *</label>
-                  <input
-                    type="text"
-                    [(ngModel)]="productForm.name"
-                    name="name"
-                    class="form-input"
-                    required
-                  >
+                  <input type="text" [(ngModel)]="productForm.name" name="name" class="form-input" required>
                 </div>
-
                 <div class="form-group">
                   <label class="form-label">Giá Hiện Tại *</label>
-                  <input
-                    type="number"
-                    [(ngModel)]="productForm.price"
-                    name="price"
-                    class="form-input"
-                    required
-                  >
+                  <input type="number" [(ngModel)]="productForm.price" name="price" class="form-input" required>
                 </div>
-
                 <div class="form-group">
                   <label class="form-label">Giá Gốc</label>
-                  <input
-                    type="number"
-                    [(ngModel)]="productForm.originalPrice"
-                    name="originalPrice"
-                    class="form-input"
-                  >
+                  <input type="number" [(ngModel)]="productForm.originalPrice" name="originalPrice" class="form-input">
                 </div>
-
                 <div class="form-group">
                   <label class="form-label">Danh Mục</label>
-                  <select
-                    [(ngModel)]="productForm.category"
-                    name="category"
-                    class="form-input"
-                  >
-                    <option value="headphone">Tai Nghe Headphone</option>
-                    <option value="earbuds">Tai Nghe True Wireless</option>
-                    <option value="gaming">Tai Nghe Gaming</option>
-                    <option value="studio">Tai Nghe Studio</option>
+                  <select [(ngModel)]="productForm.category" name="category" class="form-input">
+                    <option value="headphone">Tai Nghe</option>
+                    <option value="speaker">Loa</option>
+                    <option value="accessory">Phụ kiện</option>
                   </select>
                 </div>
-
                 <div class="form-group">
                   <label class="form-label">Thương Hiệu</label>
-                  <input
-                    type="text"
-                    [(ngModel)]="productForm.brand"
-                    name="brand"
-                    class="form-input"
-                  >
+                  <input type="text" [(ngModel)]="productForm.brand" name="brand" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Tồn kho</label>
+                  <input type="number" [(ngModel)]="productForm.stock" name="stock" class="form-input">
                 </div>
 
                 <div class="form-group full-width">
                   <label class="form-label">Mô Tả</label>
-                  <textarea
-                    [(ngModel)]="productForm.description"
-                    name="description"
-                    class="form-input"
-                    rows="3"
-                  ></textarea>
+                  <textarea [(ngModel)]="productForm.description" name="description" class="form-input" rows="3"></textarea>
                 </div>
 
+               <!-- <div class="form-group full-width">
+                  <label class="form-label">Ảnh Chính (Ảnh bìa)</label>
+                  <input type="file" (change)="onFileSelected($event, 'image')" class="form-input file-input" [disabled]="isUploading">
+                  @if (productForm.image) {
+                    <div class="image-preview">
+                      <input type="text" [value]="productForm.image" readonly class="form-input url-preview" (click)="$event.target.select()">
+                      <img [src]="productForm.image" alt="Preview">
+                    </div>
+                  }
+                </div>-->
+
                 <div class="form-group full-width">
-                  <label class="form-label">Tính Năng</label>
+                  <label class="form-label">Ảnh Sản Phẩm</label>
                   <div class="features-list">
-                    @for (feature of productForm.features; track $index) {
+                    @for (image of productForm.images || []; track $index) {
                       <div class="feature-input-group">
-                        <input
-                          type="text"
-                          [(ngModel)]="productForm.features[$index]"
-                          [name]="'feature' + $index"
-                          class="form-input"
-                          placeholder="Tính năng sản phẩm"
-                        >
+                        <input type="file" (change)="onFileSelected($event, 'images', $index)" class="form-input file-input" [disabled]="isUploading">
+                        @if (productForm.images?.[$index]) {
+                           <div class="image-preview-small">
+                             <input type="text" [value]="productForm.images?.[$index]" readonly class="form-input url-preview small" (click)="$event.target.select()">
+                             <img [src]="productForm.images?.[$index]" alt="Preview">
+                           </div>
+                        }
                         <button
                           type="button"
                           class="remove-feature-btn"
-                          (click)="removeFeature($index)"
+                          (click)="removeImageField($index)"
+                          [disabled]="isUploading"
                         >
                           ×
                         </button>
                       </div>
                     }
-                    <button type="button" class="add-feature-btn" (click)="addFeature()">
-                      + Thêm Tính Năng
+                    <button type="button" class="add-feature-btn" (click)="addImageField()" [disabled]="isUploading">
+                      + Thêm Ảnh
                     </button>
                   </div>
                 </div>
 
                 <div class="form-group">
                   <label class="checkbox-label">
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="productForm.inStock"
-                      name="inStock"
-                    >
+                    <input type="checkbox" [(ngModel)]="productForm.isActive" name="isActive">
                     <span class="checkmark"></span>
-                    Còn Hàng
+                    Hiển thị (Active)
                   </label>
                 </div>
-              </div>
-
-              <div class="form-actions">
-                <button type="button" class="btn btn-secondary" (click)="showProductForm = false">
+                <div class="form-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" [(ngModel)]="productForm.isFeatured" name="isFeatured">
+                    <span class="checkmark"></span>
+                    Nổi bật (Featured)
+                  </label>
+                </div>
+              
+              </div> <div class="form-actions">
+                <button type="button" class="btn btn-secondary" (click)="cancelEdit()">
                   Hủy
                 </button>
-                <button type="submit" class="btn btn-primary">
-                  {{ editingProduct ? 'Cập Nhật' : 'Thêm Sản Phẩm' }}
+                <button type="submit" class="btn btn-primary" [disabled]="isUploading">
+                  {{ isUploading ? 'Đang tải ảnh...' : (editingProduct ? 'Cập Nhật' : 'Thêm Sản Phẩm') }}
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      </div>
-    }
-  </div>
-</div>
+          </div> </div> </div> }
+    
+  </div> </div> 

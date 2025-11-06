@@ -1,4 +1,3 @@
-<!-- Hero Section -->
 <section class="hero">
   <div class="container">
     <div class="hero-content">
@@ -15,80 +14,39 @@
         </button>
       </div>
       <div class="hero-visual">
-        <div class="floating-card card-1">
-          <div class="card-image">
-            <img src="assets/images/wh-1000xm5.png" alt="Sony WH-1000XM5">
-          </div>
-          <span class="card-title">Sony WH-1000XM5</span>
-        </div>
-        <div class="floating-card card-2">
-          <div class="card-image">
-            <img src="assets/images/airpods-pro2.png" alt="AirPods Pro 2">
-          </div>
-          <span class="card-title">AirPods Pro 2</span>
-        </div>
+        @if (heroProducts.length > 0) {
+          @for (product of heroProducts; track product.id; let i = $index) {
+            <a [routerLink]="['/products', product.id]" class="floating-card" [class.card-1]="i === 0" [class.card-2]="i === 1">
+              <div class="card-image">
+                <img [src]="product.image" [alt]="product.name">
+              </div>
+              <span class="card-title">{{ product.name }}</span>
+            </a>
+          }
+        }
         <div class="hero-background"></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Featured Products Section -->
 <section class="featured-products">
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">Sản Phẩm Nổi Bật</h2>
-      <div class="sort-controls">
-        <select class="sort-select">
-          <option>Sắp xếp theo</option>
-          <option>Phổ biến nhất</option>
-          <option>Giá thấp đến cao</option>
-          <option>Giá cao đến thấp</option>
-        </select>
       </div>
-    </div>
-
     <div class="category-tabs">
-      <button class="category-tab active">Tất Cả</button>
-      <button class="category-tab">Tai Nghe</button>
-      <button class="category-tab">True Wireless</button>
-      <button class="category-tab">Gaming</button>
+      <button class="category-tab" [class.active]="activeCategory === 'all'" (click)="selectCategory('all')">Tất Cả</button>
+      <button class="category-tab" [class.active]="activeCategory === 'headphone'" (click)="selectCategory('headphone')">Tai Nghe</button>
+      <button class="category-tab" [class.active]="activeCategory === 'speaker'" (click)="selectCategory('speaker')">Loa</button>
     </div>
-    <app-products-grid [products]="featuredProducts"></app-products-grid>
     
-
+    <app-products-grid [products]="filteredProducts"></app-products-grid>
+    
     <div class="view-all-section">
       <button class="btn btn-secondary" routerLink="/products">
         Xem Tất Cả Sản Phẩm
       </button>
-    </div>
-  </div>
-</section>
-
-<!-- Features Section -->
-<section class="features">
-  <div class="container">
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">🚚</div>
-        <h3>Giao Hàng Miễn Phí</h3>
-        <p>Miễn phí vận chuyển cho đơn hàng từ 500K</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔒</div>
-        <h3>Bảo Hành 2 Năm</h3>
-        <p>Bảo hành chính hãng toàn quốc</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">💳</div>
-        <h3>Thanh Toán An Toàn</h3>
-        <p>Đa dạng phương thức thanh toán</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📞</div>
-        <h3>Hỗ Trợ 24/7</h3>
-        <p>Đội ngũ hỗ trợ khách hàng chuyên nghiệp</p>
-      </div>
     </div>
   </div>
 </section>

@@ -10,6 +10,7 @@ import { authGuard } from './guards/auth-guard';
 import { Admin } from './pages/admin/admin';
 import { adminGuard } from './guards/admin-guard';
 import { Products } from './pages/products/products';
+import { ForgotPassword } from './pages/forgot-password/forgot-password';
 
 export const routes: Routes = [
     {path: '', component:Home},
@@ -17,6 +18,7 @@ export const routes: Routes = [
     {path:'products/:id', component:ProductDetail},
     {path:'login', component:Login},
     {path:'register',component:Register},
+  { path: 'forgot-password', component: ForgotPassword },
     {path:'cart', component:Cart},
     {path:'checkout', component:Checkout, canActivate:[authGuard]},
     {path:'admin', component: Admin, canActivate:[authGuard,adminGuard]},

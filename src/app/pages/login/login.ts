@@ -12,7 +12,7 @@ import { AuthService } from '../../services/auth';
   styleUrl: './login.scss',
 })
 export class Login {
-    credentials = {
+  credentials = {
     email: '',
     password: ''
   };
@@ -35,17 +35,22 @@ export class Login {
     this.errorMessage = '';
 
     this.authService.login(this.credentials).subscribe({
-      next: (success) => {
+      next: (response) => {
         this.isLoading = false;
-        if (success) {
+        if (response.success) {
           this.router.navigate(['/']);
         } else {
-          this.errorMessage = 'Email hoặc mật khẩu không đúng';
+          this.errorMessage = response.message || 'Đăng nhập thất bại';
         }
       },
-      error: () => {
+      error: (error) => {
         this.isLoading = false;
-        this.errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại sau.';
+        if (error.status === 400) {
+          this.errorMessage = 'Email hoặc mật khẩu không chính xác';
+        } else {
+          this.errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại sau.';
+        }
+        console.error('Login error:', error);
       }
     });
   }
@@ -55,7 +60,7 @@ export class Login {
       this.credentials.email = 'admin@athengaudio.com';
       this.credentials.password = 'admin123';
     } else {
-      this.credentials.email = 'user@athengaudio.com';
+      this.credentials.email = 'user@example.com';
       this.credentials.password = 'user123';
     }
     this.onSubmit();

@@ -1,20 +1,23 @@
 export interface Product {
-  id: number;
+  id: string; // SỬA: MongoDB ID là string
   name: string;
   price: number;
   originalPrice?: number;
-  image: string;
+  image: string; 
+  images?: string[];
   category: string;
   subCategory: string;
   brand: string;
   description: string;
   features: string[];
-  inStock: boolean;
+  stock: number; // SỬA: từ inStock: boolean
   rating: number;
-  reviews: number;
+  reviewCount: number; // SỬA: từ reviews: number
+  isActive?: boolean;
+  isFeatured?: boolean;
   type?: string;
   
-  // Thêm các thuộc tính mới cho chi tiết sản phẩm
+  // Thuộc tính chi tiết
   colors?: string[];
   weight?: string;
   batteryLife?: string;
@@ -30,16 +33,12 @@ export interface Product {
   chargingTime?: string;
   compatibility?: string[];
   includedItems?: string[];
-  images?: string[]; // Multiple images for product detail
 }
-export interface CartItem {
-  product: Product;
-  quantity: number;
-}
+
 
 export interface Order {
   id: number;
-  items: CartItem[];
+  items: any[]; 
   total: number;
   status: 'pending' | 'completed' | 'cancelled';
   createdAt: Date;
