@@ -1,0 +1,111 @@
+// SỬA LỖI:
+// Chúng ta chỉ cần import 'order-history.scss'.
+// File này đã tự động import 'profile.scss', 
+// vì vậy chúng ta có được cả hai bộ style mà không bị lỗi.
+@use '../order-history/order-history.scss';
+
+// Style riêng cho trang chi tiết
+.order-detail-view {
+  .back-link {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .order-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+
+    .page-title {
+      margin-bottom: 0.25rem;
+    }
+    .order-id, .order-date {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      margin-right: 1rem;
+    }
+  }
+
+  .order-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .detail-card {
+    background: var(--bg-light);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-dark);
+    }
+
+    p {
+      margin: 0.5rem 0;
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    strong {
+      color: var(--text-dark);
+    }
+
+    hr {
+      border: none;
+      border-top: 1px dashed var(--border-color);
+      margin: 1rem 0;
+    }
+
+    .grand-total strong {
+      font-size: 1.1rem;
+      color: var(--primary-color);
+    }
+
+    // Dành cho danh sách item
+    &.item-list {
+      background: white;
+      border: 1px solid var(--border-color);
+      padding: 0;
+
+      h3 {
+        padding: 1.5rem 2rem;
+        margin-bottom: 0;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      // Tái sử dụng style .order-item từ order-history.scss
+      .order-item {
+        padding: 1rem 2rem;
+        border-bottom: 1px solid var(--border-color);
+        &:last-child {
+          border-bottom: none;
+        }
+      }
+    }
+  }
+}
+
+// Tái sử dụng style loading/empty từ order-history
+.loading-state,
+.empty-state {
+  @extend .loading-state;
+}

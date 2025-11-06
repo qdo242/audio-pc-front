@@ -54,9 +54,16 @@
                     <div class="order-footer">
                       <span class="order-total-label">Tổng tiền:</span>
                       <span class="order-total-amount">{{ order.totalAmount | number }}₫</span>
-                      <button class="btn btn-secondary btn-small">Xem chi tiết</button>
+                      
+                      @if (order.status === 'PENDING') {
+                        <button class="btn btn-danger btn-small" (click)="cancelOrder(order.id)">
+                          Hủy đơn
+                        </button>
+                      }
+                      
+                      <a [routerLink]="['/orders', order.id]" class="btn btn-secondary btn-small">Xem chi tiết</a>
                     </div>
-                  </div>
+                    </div>
                 }
               </div>
             } @else {

@@ -1,0 +1,84 @@
+<div class="profile-page">
+  <div class="container">
+    <div class="profile-layout">
+      
+      <app-account-sidebar [activePage]="'orders'"></app-account-sidebar>
+
+      <main class="profile-content">
+        @if (isLoading) {
+          <div class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Đang tải chi tiết đơn hàng...</p>
+          </div>
+        } @else if (errorMessage) {
+          <div class="empty-state">
+            <div class="empty-icon">😕</div>
+            <h2>Lỗi</h2>
+            <p>{{ errorMessage }}</p>
+            <a routerLink="/orders" class="btn btn-primary">Quay lại Lịch sử</a>
+          </div>
+        } @else if (order) {
+          <div class="order-detail-view">
+            <a routerLink="/orders" class="back-link">← Quay lại danh sách đơn hàng</a>
+            
+            <div class="order-detail-header">
+              <div class="header-left">
+                <h1 class="page-title">Chi tiết Đơn hàng</h1>
+                <span class="order-id">Mã ĐH: #{{ order.id }}</span>
+                <span class="order-date">Ngày đặt: {{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="header-right">
+                <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+                  {{ getStatusText(order.status) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="order-detail-grid">
+              <div class="detail-card">
+                <h3>Thông tin giao hàng</h3>
+                <div class="address-info">
+                  <strong>{{ order.shippingAddress.fullName }}</strong>
+                  <p>{{ order.shippingAddress.phone }}</p>
+                  <p>{{ order.shippingAddress.street }}</p>
+                  <p>{{ order.shippingAddress.city }}, {{ order.shippingAddress.country }}</p>
+                </div>
+              </div>
+
+              <div class="detail-card">
+                <h3>Thông tin thanh toán</h3>
+                <div class="payment-info">
+                  <p><strong>Phương thức:</strong> {{ order.paymentMethod }}</p>
+                  <p><strong>Tổng tiền hàng:</strong> {{ (order.totalAmount) | number }}₫</p>
+                  <p><strong>Phí vận chuyển:</strong> 0₫</p>
+                  <hr>
+                  <p class="grand-total"><strong>Tổng cộng: {{ order.totalAmount | number }}₫</strong></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-card item-list">
+              <h3>Danh sách sản phẩm ({{ order.items.length }})</h3>
+              @for (item of order.items; track item.productId) {
+                <div class="order-item">
+                  <img [src]="getFullImageUrl(item.image)" alt="{{ item.productName }}" class="item-image">
+                  <div class="item-info">
+                    <span class="item-name">{{ item.productName }}</span>
+                    
+                  </div>
+                  <div class="item-price-qty">
+                    <span class="item-price">{{ item.price | number }}₫</span>
+                    <span class="item-qty">x {{ item.quantity }}</span>
+                  </div>
+                  <div class="item-total">
+                    {{ (item.price * item.quantity) | number }}₫
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </main>
+    </div>
+  </div>
+</div>

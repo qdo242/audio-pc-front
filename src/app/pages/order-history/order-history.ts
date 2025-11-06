@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+// SỬA: Thêm Order
 import { Order, OrderService } from '../../services/order';
 import { AuthService } from '../../services/auth';
 import { AccountSidebar } from '../../components/account-sidebar/account-sidebar';
@@ -64,6 +65,27 @@ export class OrderHistory implements OnInit {
     return `http://localhost:8080${url}`; 
   }
   // ---------------------------------------------
+
+  // SỬA: THÊM HÀM NÀY
+  cancelOrder(orderId: string | undefined): void {
+    if (!orderId) return;
+
+    if (confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')) {
+      this.isLoading = true; // Hiển thị loading để người dùng biết
+      this.orderService.updateOrderStatus(orderId, 'CANCELLED').subscribe({
+        next: (updatedOrder) => {
+          // Tải lại danh sách đơn hàng sau khi hủy
+          this.loadOrders(); 
+        },
+        error: (err) => {
+          console.error('Error cancelling order:', err);
+          alert('Đã có lỗi xảy ra khi hủy đơn hàng.');
+          this.isLoading = false;
+        }
+      });
+    }
+  }
+  // KẾT THÚC THÊM HÀM
 
   // Helper để lấy text cho trạng thái
   getStatusText(status: string): string {

@@ -18,7 +18,7 @@ import { OrderService, Order, OrderItem, Address } from '../../services/order';
 export class Checkout implements OnInit, OnDestroy {
   cartItems: CartItem[] = [];
   total: number = 0;
-  shippingFee: number = 0; // 
+  shippingFee: number = 0; 
   grandTotal: number = 0;
   isLoading: boolean = true;
 
@@ -35,7 +35,7 @@ export class Checkout implements OnInit, OnDestroy {
     note: ''
   };
 
-  paymentMethod: 'COD' | 'CREDIT_CARD' | 'PAYPAL' | 'BANK_TRANSFER' = 'COD'; // Khớp với enum backend
+  paymentMethod: 'COD' | 'CREDIT_CARD' | 'PAYPAL' | 'BANK_TRANSFER' = 'COD'; 
   private cartSubscription: Subscription | undefined;
 
   constructor(
@@ -57,9 +57,16 @@ export class Checkout implements OnInit, OnDestroy {
   }
 
   loadCartItems(): void {
+    this.isLoading = true; // Sửa: Đặt isLoading = true ở đây
     this.cartSubscription = this.cartService.getCartItems().subscribe({
       next: (items) => {
         this.cartItems = items;
+        // Sửa: Nếu giỏ hàng rỗng, quay về trang giỏ hàng
+        if (items.length === 0) {
+          alert('Giỏ hàng của bạn đang trống!');
+          this.router.navigate(['/cart']);
+          return; // Dừng thực thi
+        }
         this.calculateTotals();
         this.isLoading = false;
       },
@@ -81,12 +88,40 @@ export class Checkout implements OnInit, OnDestroy {
   }
 
   calculateTotals(): void {
-    // SỬA LỖI: Dùng item.price (phẳng)
     this.total = this.cartItems.reduce((sum, item) => {
       return sum + (Number(item.price) * Number(item.quantity));
     }, 0);
     
     this.grandTotal = this.total + this.shippingFee;
+  }
+
+  // --- THÊM HÀM NÀY ---
+  updateQuantityInCheckout(item: CartItem, newQuantity: number): void {
+    if (newQuantity < 1) {
+      this.removeItemFromCheckout(item); // Xóa nếu giảm xuống 0
+      return;
+    }
+    
+    this.cartService.updateQuantityFrontend(item.productId, newQuantity).subscribe({
+      next: () => {
+        // Giỏ hàng sẽ tự động cập nhật qua cartSubscription
+        // và calculateTotals() sẽ được gọi
+      },
+      error: (error) => console.error('Error updating quantity:', error)
+    });
+  }
+
+  // --- THÊM HÀM NÀY ---
+  removeItemFromCheckout(item: CartItem): void {
+    // Không cần confirm ở checkout, xóa luôn
+    this.cartService.removeFromCartFrontend(item.productId).subscribe({
+      next: () => {
+        // Giỏ hàng sẽ tự động cập nhật qua cartSubscription
+        // và calculateTotals() sẽ được gọi
+        // Nếu xóa hết, loadCartItems() sẽ tự động điều hướng
+      },
+      error: (error) => console.error('Error removing item:', error)
+    });
   }
 
   placeOrder(): void {
@@ -120,7 +155,7 @@ export class Checkout implements OnInit, OnDestroy {
       productName: item.productName,
       price: item.price,
       quantity: item.quantity,
-      subTotal: item.price * item.quantity, // SỬA: Thêm tính toán subTotal
+      subTotal: item.price * item.quantity, 
       image: item.image
     }));
 

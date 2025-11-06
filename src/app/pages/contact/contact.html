@@ -1,0 +1,85 @@
+<div class="contact-page">
+  <div class="container">
+    <div class="page-header">
+      <h1>Liên Hệ Với Chúng Tôi</h1>
+      <p>Chúng tôi luôn sẵn sàng lắng nghe bạn. Hãy gửi thắc mắc của bạn cho Atheng Audio.</p>
+    </div>
+
+    <div class="contact-layout">
+      <div class="contact-form-section">
+        @if (isSubmitted) {
+          <div class="form-success">
+            <h3>Cảm ơn bạn!</h3>
+            <p>Chúng tôi đã nhận được tin nhắn của bạn và sẽ phản hồi sớm nhất có thể.</p>
+          </div>
+        } @else {
+          <form (ngSubmit)="submitForm()" class="contact-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="name">Họ và tên *</label>
+                <input type="text" id="name" class="form-input" [(ngModel)]="contactData.name" name="name" required>
+              </div>
+              <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" class="form-input" [(ngModel)]="contactData.email" name="email" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="subject">Chủ đề</label>
+              <input type="text" id="subject" class="form-input" [(ngModel)]="contactData.subject" name="subject">
+            </div>
+            <div class="form-group">
+              <label for="message">Tin nhắn của bạn *</label>
+              <textarea id="message" class="form-input" rows="6" [(ngModel)]="contactData.message" name="message" required></textarea>
+            </div>
+            
+            @if (errorMessage) {
+              <div class="form-error">
+                {{ errorMessage }}
+              </div>
+            }
+            
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+                {{ isLoading ? 'Đang gửi...' : 'Gửi Tin Nhắn' }}
+              </button>
+            </div>
+          </form>
+        }
+      </div>
+      
+      <div class="contact-info-section">
+        <h3>Thông Tin Liên Hệ</h3>
+        <p>Bạn cũng có thể liên hệ trực tiếp với chúng tôi qua các kênh dưới đây.</p>
+        
+        <div class="info-item">
+          <span class="info-icon">📍</span>
+          <div class="info-text">
+            <strong>Địa chỉ</strong>
+            <span>160 Trung Phụng, Đống Đa, Hà Nội, Việt Nam</span>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">✉️</span>
+          <div class="info-text">
+            <strong>Email</strong>
+            <span>support@athengaudio.com</span>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">📞</span>
+          <div class="info-text">
+            <strong>Điện thoại</strong>
+            <span>1900 1234</span>
+          </div>
+        </div>
+
+            <div class="map-responsive">
+          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.3937165938596!2d105.8338167765303!3d21.016926788182314!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab845d6b5e69%3A0x48ea95da60d5d2bc!2zMTQwIFAuVHJ1bmcgUGjhu6VuZywgS2jDom0gVGhpw6puLCDEkOG7kW5nIMSQYSwgSMOgIE7hu5lpIDExNTkyMiwgVmlldG5hbQ!5e0!3m2!1sen!2s!4v1762420154150!5m2!1sen!2s" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+
+       
+      </div>
+    </div>
+  </div>
+</div>

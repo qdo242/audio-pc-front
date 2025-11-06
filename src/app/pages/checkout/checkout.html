@@ -112,17 +112,36 @@
             <h3>📦 Đơn hàng của bạn</h3>
             
             <div class="order-items">
-              <div *ngFor="let item of cartItems" class="order-item">
-                <div class="item-image">
-                  <img [src]="item.image || 'assets/images/default-product.png'" [alt]="item.productName">
-                  <span class="item-quantity">{{ item.quantity }}</span>
+              @for (item of cartItems; track item.productId) {
+                <div class="order-item">
+                  <div class="item-image">
+                    <img [src]="item.image || 'assets/images/default-product.png'" [alt]="item.productName">
+                    <span class="item-quantity">{{ item.quantity }}</span>
+                  </div>
+                  <div class="item-info">
+                    <div class="item-name">{{ item.productName }}</div>
+                    <div class="item-brand">{{ item.price | number }}₫</div>
+                    
+                    <div class="item-controls">
+                      <div class="quantity-controls-checkout">
+                        <button (click)="updateQuantityInCheckout(item, item.quantity - 1)" [disabled]="item.quantity <= 1">
+                          −
+                        </button>
+                        <span>{{ item.quantity }}</span>
+                        <button (click)="updateQuantityInCheckout(item, item.quantity + 1)">
+                          +
+                        </button>
+                      </div>
+                      <button class="remove-btn-checkout" (click)="removeItemFromCheckout(item)">
+                        Xóa
+                      </button>
+                    </div>
+                    </div>
+                  <div class="item-price">
+                    {{ (item.price * item.quantity) | number }}₫
+                  </div>
                 </div>
-                <div class="item-info">
-                  <div class="item-name">{{ item.productName }}</div>
-                  <div class="item-brand">SKU: {{ item.productId }}</div>
-                </div>
-                <div class="item-price">{{ (item.price * item.quantity) | number }}₫</div>
-              </div>
+              }
             </div>
 
             <div class="order-totals">

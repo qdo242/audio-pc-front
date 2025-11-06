@@ -16,8 +16,9 @@ import { ForgotPassword } from './pages/forgot-password/forgot-password';
 import { Wishlist } from './pages/wishlist/wishlist';
 import { Profile } from './pages/profile/profile';
 import { OrderHistory } from './pages/order-history/order-history';
-// import { About } from './pages/about/about';
-// import { Contact } from './pages/contact/contact';
+import { OrderDetail } from './pages/order-detail/order-detail';
+import { About } from './pages/about/about';
+import { Contact } from './pages/contact/contact';
 
 export const routes: Routes = [
     {path: '', component:Home},
@@ -34,8 +35,9 @@ export const routes: Routes = [
     { path: 'wishlist', component: Wishlist, canActivate: [authGuard] },
     { path: 'profile', component: Profile, canActivate: [authGuard] },
     { path: 'orders', component: OrderHistory, canActivate: [authGuard] },
-    // { path: 'about', component: About },
-    // { path: 'contact', component: Contact },
+    { path: 'orders/:id', component: OrderDetail, canActivate: [authGuard] },
+    { path: 'about', component: About },
+    { path: 'contact', component: Contact },
    
 
     {path: '**', redirectTo: ''}
