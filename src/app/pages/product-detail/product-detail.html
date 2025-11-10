@@ -17,8 +17,25 @@
       <div class="product-detail">
         <div class="product-main">
           <div class="product-images">
+            
             <div class="main-image">
-              <img [src]="selectedImage" [alt]="product.name" class="product-image">
+              @if (isMediaVideo(selectedImage)) {
+                <video 
+                  [src]="selectedImage" 
+                  class="product-video" 
+                  controls 
+                  autoplay 
+                  muted 
+                  loop
+                  playsinline>
+                </video>
+              } @else {
+                <img 
+                  [src]="selectedImage || defaultPlaceholder" 
+                  [alt]="product.name" 
+                  class="product-image">
+              }
+              
               <div class="image-badges">
                 @if (product.originalPrice && product.originalPrice > product.price) {
                   <div class="discount-badge">
@@ -38,8 +55,20 @@
               </div>
             </div>
             
-            <div class="image-thumbnails" *ngIf="product.images && product.images.length > 1">
-              @for (image of product.images; track image) {
+            <div class="image-thumbnails" *ngIf="videoUrl || galleryImages.length > 0">
+              
+              @if (videoUrl) {
+                <div 
+                  class="thumbnail video-thumb" 
+                  [class.active]="selectedImage === videoUrl"
+                  (click)="changeImage(videoUrl)"
+                >
+                  <span class="video-icon">▶️</span>
+                  <video [src]="videoUrl" muted preload="metadata"></video>
+                </div>
+              }
+
+              @for (image of galleryImages; track image) {
                 <div 
                   class="thumbnail" 
                   [class.active]="selectedImage === image"
@@ -56,7 +85,6 @@
               <h1 class="product-title">{{ product.name }}</h1>
               <div class="product-meta">
                 <span class="product-brand">Thương hiệu: {{ product.brand }}</span>
-                <!-- <span class="product-sku">Mã SP: #{{ product.id }}</span> -->
                 <span class="product-stock" [class.in-stock]="product.stock > 0" [class.out-of-stock]="product.stock <= 0">
                   {{ product.stock > 0 ? 'Còn hàng' : 'Hết hàng' }}
                 </span>
@@ -245,7 +273,6 @@
                       </ul>
                     </div>
                   }
-                  <!--Thêm sau-->
                   <div class="product-benefits">
                     <h4>🎯 Lợi ích khi sử dụng:</h4>
                     <div class="benefits-grid">
@@ -279,8 +306,7 @@
                       </div>
                     </div>
                   </div>
-                  <!---->
-                </div>
+                  </div>
               </div>
             }
 

@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-// SỬA: Thêm Output và EventEmitter
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core'; 
 import { Router, RouterModule } from '@angular/router';
 import { Product } from '../../interfaces/product';
@@ -15,7 +14,6 @@ import { AuthService } from '../../services/auth';
 })
 export class ProductCard implements OnInit {
     @Input() product! : Product;
-    // SỬA: Thêm Output để thông báo cho component cha (trang Wishlist) khi có thay đổi
     @Output() wishlistChanged = new EventEmitter<void>();
     
     displayImage: string = '';
@@ -23,7 +21,7 @@ export class ProductCard implements OnInit {
     constructor(
       private cartService : CartService,
       private router : Router,
-      public authService: AuthService // SỬA: Để public để HTML có thể truy cập
+      public authService: AuthService
     ){}
 
     ngOnInit(): void {
@@ -41,16 +39,20 @@ export class ProductCard implements OnInit {
       return `http://localhost:8080${url}`; 
     }
 
+    // SỬA: Đảo ngược logic. Ưu tiên product.image (Ảnh Bìa) trước
     getSafeDisplayImage(): string {
       const defaultPlaceholder = 'assets/images/default-product.png';
       let imageUrl = '';
 
-      if (this.product.images && this.product.images.length > 0) {
-        imageUrl = this.getFullImageUrl(this.product.images[0]);
-      }
+      // 1. Ưu tiên Ảnh Bìa (product.image)
+      imageUrl = this.getFullImageUrl(this.product.image);
       
+      // 2. Nếu không có Ảnh Bìa, thử lấy ảnh Gallery đầu tiên (product.images[0])
       if (!imageUrl || imageUrl.endsWith('default-product.png')) { 
-        imageUrl = this.getFullImageUrl(this.product.image);
+        if (this.product.images && this.product.images.length > 0) {
+          // (Backend mới đã tách video, nên images[0] luôn là ảnh)
+          imageUrl = this.getFullImageUrl(this.product.images[0]);
+        }
       }
       
       return imageUrl || defaultPlaceholder;
@@ -90,11 +92,6 @@ export class ProductCard implements OnInit {
       return '★'.repeat(fullStars) + '½'.repeat(halfStar) + '☆'.repeat(emptyStars);
     }
 
-    // --- THÊM LOGIC WISHLIST MỚI ---
-
-    /**
-     * Kiểm tra xem sản phẩm này có trong wishlist của người dùng hiện tại không
-     */
     isInWishlist(): boolean {
       if (!this.authService.currentUserValue || !this.authService.currentUserValue.wishlist) {
         return false;
@@ -102,11 +99,8 @@ export class ProductCard implements OnInit {
       return this.authService.currentUserValue.wishlist.includes(this.product.id);
     }
 
-    /**
-     * Thêm hoặc xóa sản phẩm khỏi wishlist
-     */
     toggleWishlist(event: Event): void {
-      event.stopPropagation(); // Ngăn không cho chuyển sang trang chi tiết
+      event.stopPropagation(); 
 
       if (!this.authService.isLoggedIn) {
         alert('Vui lòng đăng nhập để sử dụng tính năng này!');
@@ -115,20 +109,18 @@ export class ProductCard implements OnInit {
       }
 
       if (this.isInWishlist()) {
-        // Đã có -> Xóa đi
         this.authService.removeFromWishlist(this.product.id).subscribe({
           next: () => {
             console.log('Đã xóa khỏi wishlist');
-            this.wishlistChanged.emit(); // Bắn sự kiện
+            this.wishlistChanged.emit(); 
           },
           error: (err) => console.error('Lỗi khi xóa wishlist:', err)
         });
       } else {
-        // Chưa có -> Thêm vào
         this.authService.addToWishlist(this.product.id).subscribe({
           next: () => {
             console.log('Đã thêm vào wishlist');
-            this.wishlistChanged.emit(); // Bắn sự kiện
+            this.wishlistChanged.emit();
           },
           error: (err) => console.error('Lỗi khi thêm wishlist:', err)
         });

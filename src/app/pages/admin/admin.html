@@ -186,9 +186,7 @@
                       </button>
                     </div>
                   </div>
-                }
-
-                @if (orders.length === 0) {
+                } @if (orders.length === 0) {
                   <div class="empty-state">
                     <div class="empty-icon">🛒</div>
                     <h3>Chưa có đơn hàng nào</h3>
@@ -204,7 +202,7 @@
         @if (isUploading) {
           <div class="upload-spinner">
             <div class="spinner-icon"></div>
-            <span>Đang tải ảnh lên...</span>
+            <span>Đang tải file lên...</span>
           </div>
         }
         <div class="modal-content">
@@ -251,29 +249,31 @@
                   <textarea [(ngModel)]="productForm.description" name="description" class="form-input" rows="3"></textarea>
                 </div>
 
-               <!-- <div class="form-group full-width">
-                  <label class="form-label">Ảnh Chính (Ảnh bìa)</label>
-                  <input type="file" (change)="onFileSelected($event, 'image')" class="form-input file-input" [disabled]="isUploading">
-                  @if (productForm.image) {
+                <div class="form-group full-width">
+                  <label class="form-label">Video Sản Phẩm (Ưu tiên, sẽ hiển thị đầu tiên)</label>
+                  <input type="file" (change)="onFileSelected($event, 'video')" class="form-input file-input" [disabled]="isUploading" accept="video/mp4,video/webm">
+                  @if (productForm.videoUrl) {
                     <div class="image-preview">
-                      <input type="text" [value]="productForm.image" readonly class="form-input url-preview" (click)="$event.target.select()">
-                      <img [src]="productForm.image" alt="Preview">
+                      <input type="text" [value]="productForm.videoUrl" readonly class="form-input url-preview" (click)="$event.target.select()">
+                      <video [src]="productForm.videoUrl" controls width="200"></video>
                     </div>
                   }
-                </div>-->
+                </div>
 
                 <div class="form-group full-width">
-                  <label class="form-label">Ảnh Sản Phẩm</label>
+                  <label class="form-label">Ảnh Sản Phẩm (Ảnh đầu tiên sẽ được dùng làm ảnh bìa)</label>
                   <div class="features-list">
-                    @for (image of productForm.images || []; track $index) {
+                    @for (image of productForm.images; track $index) {
                       <div class="feature-input-group">
-                        <input type="file" (change)="onFileSelected($event, 'images', $index)" class="form-input file-input" [disabled]="isUploading">
+                        <input type="file" (change)="onFileSelected($event, 'images', $index)" class="form-input file-input" [disabled]="isUploading" accept="image/*">
+                        
                         @if (productForm.images?.[$index]) {
                            <div class="image-preview-small">
                              <input type="text" [value]="productForm.images?.[$index]" readonly class="form-input url-preview small" (click)="$event.target.select()">
                              <img [src]="productForm.images?.[$index]" alt="Preview">
                            </div>
                         }
+                        
                         <button
                           type="button"
                           class="remove-feature-btn"
@@ -285,7 +285,7 @@
                       </div>
                     }
                     <button type="button" class="add-feature-btn" (click)="addImageField()" [disabled]="isUploading">
-                      + Thêm Ảnh
+                      + Thêm Ảnh Sản Phẩm
                     </button>
                   </div>
                 </div>
@@ -310,10 +310,10 @@
                   Hủy
                 </button>
                 <button type="submit" class="btn btn-primary" [disabled]="isUploading">
-                  {{ isUploading ? 'Đang tải ảnh...' : (editingProduct ? 'Cập Nhật' : 'Thêm Sản Phẩm') }}
+                  {{ isUploading ? 'Đang tải file...' : (editingProduct ? 'Cập Nhật' : 'Thêm Sản Phẩm') }}
                 </button>
               </div>
             </form>
           </div> </div> </div> }
     
-  </div> </div> 
+  </div> </div>

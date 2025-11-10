@@ -1,29 +1,24 @@
 <header class="header">
   <div class="container">
     <div class="header-content">
-      <!-- Logo -->
       <div class="logo">
         <a routerLink="/home">
           <h1>AthengAudio</h1>
         </a>
       </div>
 
-      <!-- Navigation -->
-      <nav class="nav" [class.active]="isMenuOpen">
+      <nav class="nav" [class.active]="isMenuOpen" (click)="$event.stopPropagation()">
         <a routerLink="/home" routerLinkActive="active" (click)="isMenuOpen = false">Trang chủ</a>
         <a routerLink="/products" routerLinkActive="active" (click)="isMenuOpen = false">Sản phẩm</a>
         <a routerLink="/about" routerLinkActive="active" (click)="isMenuOpen = false">Giới thiệu</a>
         <a routerLink="/contact" routerLinkActive="active" (click)="isMenuOpen = false">Liên hệ</a>
         
-        <!-- Admin Link (only for admin) -->
         <a *ngIf="isAdmin" routerLink="/admin" routerLinkActive="active" (click)="isMenuOpen = false">
           ⚙️ Quản trị
         </a>
       </nav>
 
-      <!-- User Actions -->
       <div class="user-actions">
-        <!-- Wishlist -->
         <a *ngIf="authService.isLoggedIn" routerLink="/wishlist" class="icon-btn" title="Yêu thích">
           ❤️
           <span class="badge" *ngIf="authService.currentUserValue?.wishlist?.length">
@@ -31,15 +26,13 @@
           </span>
         </a>
 
-        <!-- Cart -->
         <a routerLink="/cart" class="icon-btn" title="Giỏ hàng" [class.has-items]="cartItemCount > 0">
           🛒
           <span class="badge" *ngIf="cartItemCount > 0">{{ cartItemCount }}</span>
         </a>
 
-        <!-- User Menu -->
         <div class="user-menu" *ngIf="authService.isLoggedIn; else loginButton">
-          <button class="user-btn" (click)="toggleUserMenu()">
+          <button class="user-btn" (click)="toggleUserMenu($event)">
             <span class="user-avatar" [title]="userName">
               {{ userInitials }}
             </span>
@@ -47,7 +40,7 @@
             <span class="dropdown-arrow">▼</span>
           </button>
 
-          <div class="user-dropdown" [class.active]="isUserMenuOpen">
+          <div class="user-dropdown" [class.active]="isUserMenuOpen" (click)="$event.stopPropagation()">
             <div class="user-info">
               <strong>{{ userName }}</strong>
               <small>
@@ -94,8 +87,7 @@
           </div>
         </ng-template>
 
-        <!-- Mobile Menu Toggle -->
-        <button class="mobile-menu-toggle" (click)="toggleMenu()">
+        <button class="mobile-menu-toggle" (click)="toggleMenu($event)">
           ☰
         </button>
       </div>
@@ -103,5 +95,4 @@
   </div>
 </header>
 
-<!-- Overlay for mobile menu -->
 <div class="overlay" [class.active]="isMenuOpen" (click)="isMenuOpen = false"></div>

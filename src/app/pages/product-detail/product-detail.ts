@@ -17,17 +17,22 @@ import { ProductCard } from '../../components/product-card/product-card';
 })
 export class ProductDetail implements OnInit {
   product: Product | undefined;
-  selectedImage: string = ''; 
+  selectedImage: string = ''; // Đây là media (ảnh/video) đang được hiển thị
   quantity: number = 1;
   relatedProducts: Product[] = [];
   isLoading: boolean = true;
   activeTab: string = 'description';
 
-  //THÊM CÁC BIẾN CHO REVIEW FORM 
+  // Biến quản lý media
+  videoUrl: string | null = null;
+  // coverImage: string | null = null; // SỬA: Không cần, dùng product.image
+  galleryImages: string[] = []; // Chỉ chứa ảnh (không chứa video)
+  defaultPlaceholder = 'assets/images/default-product.png';
+
   isSubmittingReview = false;
   newReview: Review = {
-    author: 'Khách hàng', // Tên mặc định
-    rating: 0,           // Rating mặc định
+    author: 'Khách hàng',
+    rating: 0,
     comment: ''
   };
 
@@ -50,50 +55,15 @@ export class ProductDetail implements OnInit {
     });
   }
 
-  // SỬA: THÊM HÀM HELPER NÀY (Fix ảnh vỡ ở trang chi tiết)
-  getFullImageUrl(url: string | undefined): string {
-    const defaultPlaceholder = 'assets/images/default-product.png';
+  // SỬA: Hàm getFullImageUrl giờ chấp nhận cả 'null'
+  getFullImageUrl(url: string | undefined | null): string {
     if (!url || url.trim() === '') {
-      return ''; // Sẽ được hàm fallback xử lý
+      return ''; 
     }
     if (url.startsWith('http')) {
-      return url;
+      return url; 
     }
     return `http://localhost:8080${url}`; 
-  }
-
-  // SỬA: Logic thông minh để chọn ảnh (Ưu tiên ảnh bìa)
-  getSafeDisplayImage(product: Product, type: 'cover' | 'gallery'): string {
-    const defaultPlaceholder = 'assets/images/default-product.png';
-    
-    // 1. Lấy ảnh bìa
-    let coverImage = this.getFullImageUrl(product.image);
-    
-    // 2. Lấy ảnh gallery (nếu có)
-    let galleryImages = (product.images && product.images.length > 0)
-                          ? product.images.map(img => this.getFullImageUrl(img))
-                          : [];
-                          
-    if (type === 'cover') {
-      if (coverImage && coverImage !== defaultPlaceholder) {
-        return coverImage;
-      }
-      if (galleryImages.length > 0 && galleryImages[0] !== defaultPlaceholder) {
-        return galleryImages[0]; // Fallback: Lấy ảnh gallery đầu tiên
-      }
-    }
-    
-    // Fallback cho gallery
-    if (type === 'gallery') {
-      if (galleryImages.length > 0) {
-        return galleryImages[0]; // Trả về ảnh gallery đầu tiên
-      }
-      if (coverImage && coverImage !== defaultPlaceholder) {
-        return coverImage; // Fallback: Lấy ảnh bìa
-      }
-    }
-    
-    return defaultPlaceholder; // Fallback cuối cùng
   }
 
 
@@ -101,23 +71,29 @@ export class ProductDetail implements OnInit {
     this.isLoading = true;
     this.productService.getProductById(productId).subscribe({
       next: (product) => {
-        // SỬA: Sửa URL cho cả ảnh bìa và gallery
-        const coverImage = this.getSafeDisplayImage(product, 'cover');
-        const galleryImages = (product.images && product.images.length > 0) 
-                              ? product.images.map(img => this.getFullImageUrl(img)) 
-                              : [coverImage];
+        
+        // SỬA: LOGIC TÁCH MEDIA (Dùng model backend mới)
+        this.product = product;
+        
+        // 1. Tách Video (Fix lỗi TS2345 bằng cách kiểm tra null trước)
+        this.videoUrl = product.videoUrl ? this.getFullImageUrl(product.videoUrl) : null;
 
+        // 2. Tách Gallery (product.images)
+        this.galleryImages = (product.images || []).map(img => this.getFullImageUrl(img));
+
+        // 3. Lấy Ảnh Bìa (product.image)
+        const coverImage = this.getFullImageUrl(product.image);
+
+        // 4. SỬA: Set media hiển thị mặc định (Ưu tiên Ảnh Bìa > Ảnh Gallery đầu tiên > Video)
+        this.selectedImage = coverImage || this.galleryImages[0] || this.videoUrl || this.defaultPlaceholder;
+
+        // Cập nhật lại product (để đảm bảo rating/review không null)
         this.product = {
           ...product,
-          image: coverImage, 
-          images: galleryImages, 
           rating: product.rating || 0,
           reviewCount: product.reviewCount || 0,
           features: product.features || [],
         };
-        
-        // SỬA: Hiển thị ảnh bìa (product.image) làm ảnh chính
-        this.selectedImage = this.product.image; 
         
         this.loadRelatedProducts(this.product);
         this.isLoading = false;
@@ -137,7 +113,8 @@ export class ProductDetail implements OnInit {
           .slice(0, 4)
           .map(p => ({
             ...p,
-            image: this.getSafeDisplayImage(p, 'cover'), // Sửa logic ảnh
+            // Sửa: Lấy ảnh bìa hoặc gallery đầu tiên
+            image: this.getFullImageUrl(p.image) || this.getFullImageUrl(p.images?.[0]) || this.defaultPlaceholder
           }));
       },
       error: (error: any) => {
@@ -167,7 +144,14 @@ export class ProductDetail implements OnInit {
   addToCart(): void {
     if (this.product) {
       const userId = this.authService.currentUserValue?.id?.toString() || 'user123';
-      this.cartService.addToCartFrontend(this.product, this.quantity, userId).subscribe({
+      
+      // Gửi ảnh bìa (product.image)
+      const productForCart = {
+        ...this.product,
+        image: this.product.image || this.galleryImages[0] || this.defaultPlaceholder
+      };
+
+      this.cartService.addToCartFrontend(productForCart, this.quantity, userId).subscribe({
         next: () => {
           alert(`Đã thêm ${this.quantity} ${this.product?.name} vào giỏ hàng!`);
         },
@@ -182,7 +166,13 @@ export class ProductDetail implements OnInit {
   buyNow(): void {
     if (this.product) {
       const userId = this.authService.currentUserValue?.id?.toString() || 'user123';
-      this.cartService.addToCartFrontend(this.product, this.quantity, userId).subscribe({
+
+      const productForCart = {
+        ...this.product,
+        image: this.product.image || this.galleryImages[0] || this.defaultPlaceholder
+      };
+
+      this.cartService.addToCartFrontend(productForCart, this.quantity, userId).subscribe({
         next: () => {
           this.router.navigate(['/checkout']); 
         },
@@ -192,6 +182,14 @@ export class ProductDetail implements OnInit {
         }
       });
     }
+  }
+
+  // THÊM HÀM KIỂM TRA MEDIA TYPE
+  isMediaVideo(url: string): boolean {
+    // Sửa: Phải kiểm tra 'videoUrl' vì 'selectedImage' có thể là ảnh
+    if (!this.videoUrl) return false;
+    // Chỉ là video NẾU url đang chọn LÀ url video
+    return url === this.videoUrl;
   }
 
   addToWishlist(): void {
@@ -229,14 +227,11 @@ export class ProductDetail implements OnInit {
     return this.getDiscountPercent();
   }
   
-  // SỬA LỖI (TS2345): Chuyển 'halfStar' từ boolean thành number
   getStarRating(rating: number): string {
     const fullStars = Math.floor(rating);
-    // SỬA: Chuyển 'halfStar' thành 1 (nếu true) hoặc 0 (nếu false)
     const halfStar = rating % 1 >= 0.5 ? 1 : 0; 
     const emptyStars = 5 - fullStars - halfStar;
     
-    // Giờ 'halfStar' là number (0 hoặc 1) nên .repeat() sẽ hoạt động
     return '★'.repeat(fullStars) + '½'.repeat(halfStar) + '☆'.repeat(emptyStars);
   }
 
@@ -251,7 +246,6 @@ export class ProductDetail implements OnInit {
     
     if (!this.product) return;
 
-    // Kiểm tra đăng nhập
     if (!this.authService.isLoggedIn) {
       alert('Vui lòng đăng nhập để gửi đánh giá!');
       this.router.navigate(['/login']);
@@ -259,8 +253,6 @@ export class ProductDetail implements OnInit {
     }
 
     this.isSubmittingReview = true;
-
-    // Gán tên tác giả (phòng trường hợp user load trang rồi mới đăng nhập)
     this.newReview.author = this.authService.userName || 'Khách hàng';
 
     this.productService.addReview(this.product.id, this.newReview).subscribe({
@@ -272,7 +264,7 @@ export class ProductDetail implements OnInit {
         // Reset form
         this.newReview.rating = 5;
         this.newReview.comment = '';
-        reviewForm.resetForm(this.newReview); // Reset về giá trị mặc định
+        reviewForm.resetForm(this.newReview); 
 
         this.isSubmittingReview = false;
       },

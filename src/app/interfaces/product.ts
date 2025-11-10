@@ -10,12 +10,14 @@ export interface Product {
   name: string;
   price: number;
   originalPrice?: number;
-  image: string; 
-  images?: string[];
+  image: string; // Đây là Ảnh Bìa (Cover Image)
+  images?: string[]; // Đây là mảng chứa [Video (nếu có), Ảnh Gallery 1, Ảnh Gallery 2,...]
   category: string;
   //subCategory: string;
   brand: string;
   description: string;
+  
+  videoUrl: string | null; 
   features: string[];
   stock: number; 
   rating: number;

@@ -7,6 +7,7 @@ import { ProductService } from '../../services/product';
 import { AuthService } from '../../services/auth';
 import { Order, OrderService } from '../../services/order';
 import { FileService } from '../../services/file';
+
 @Component({
   selector: 'app-admin',
   standalone: true,
@@ -23,6 +24,7 @@ export class Admin implements OnInit {
   editingProduct: Product | null = null;
   isUploading: boolean = false; 
   
+  
   productForm: Partial<Product> = {
     name: '',
     price: 0,
@@ -30,8 +32,9 @@ export class Admin implements OnInit {
     category: 'headphone',
     brand: 'Atheng Audio',
     description: '',
-    image: '',
-    images: [''],
+    videoUrl: null, // Sẽ lưu vào product.videoUrl
+    image: '', // Sẽ lưu vào product.image (Ảnh bìa)
+    images: [''], // Sẽ lưu vào product.images (Gallery)
     stock: 100,
     isActive: true, 
     isFeatured: false,
@@ -60,11 +63,11 @@ export class Admin implements OnInit {
     this.loadOrders();
   }
 
-  // SỬA: THÊM HÀM HELPER NÀY (Fix ảnh vỡ ở bảng admin)
+  
   getFullImageUrl(url: string | undefined): string {
     const defaultPlaceholder = 'assets/images/default-product.png';
     if (!url || url.trim() === '') {
-      return ''; // Sẽ được hàm fallback xử lý
+      return ''; 
     }
     if (url.startsWith('http')) {
       return url;
@@ -72,29 +75,33 @@ export class Admin implements OnInit {
     return `http://localhost:8080${url}`; 
   }
 
-  // SỬA: Logic thông minh để chọn ảnh (Ưu tiên ảnh bìa)
+  // SỬA: Ưu tiên 'product.image' (ảnh bìa)
   getSafeDisplayImage(product: Product): string {
     const defaultPlaceholder = 'assets/images/default-product.png';
-    let imageUrl = this.getFullImageUrl(product.image);
     
-    if (!imageUrl || imageUrl.endsWith('default-product.png')) { 
-      if (product.images && product.images.length > 0) {
-        const firstGalleryImage = this.getFullImageUrl(product.images[0]);
-        if (firstGalleryImage && !firstGalleryImage.endsWith('default-product.png')) {
-          imageUrl = firstGalleryImage;
-        }
+    // 1. Ưu tiên Ảnh Bìa (product.image)
+    let coverImage = this.getFullImageUrl(product.image);
+    if (coverImage && !coverImage.endsWith('default-product.png')) {
+      return coverImage;
+    }
+
+    // 2. Nếu không có, lấy ảnh gallery đầu tiên (product.images[0])
+    if (product.images && product.images.length > 0) {
+       const firstGalleryImage = this.getFullImageUrl(product.images[0]);
+       if (firstGalleryImage && !firstGalleryImage.endsWith('default-product.png')) {
+        return firstGalleryImage;
       }
     }
-    return imageUrl || defaultPlaceholder;
+    
+    return defaultPlaceholder;
   }
 
   loadProducts(): void {
     this.productService.getAllProducts().subscribe({
       next: (products) => {
-        // SỬA: Dùng map để sửa URL ảnh (ảnh 1860a7.png)
         this.products = products.map(p => ({
           ...p,
-          image: this.getSafeDisplayImage(p) // Dùng logic thông minh
+          image: this.getSafeDisplayImage(p) 
         }));
         this.calculateStats();
       },
@@ -136,8 +143,9 @@ export class Admin implements OnInit {
       category: 'headphone',
       brand: 'Atheng Audio',
       description: '',
-      image: '',
-      images: [''],
+      videoUrl: null, // Reset
+      image: '', // Reset
+      images: [''], // Reset
       stock: 100,
       isActive: true,
       isFeatured: false,
@@ -147,22 +155,40 @@ export class Admin implements OnInit {
     this.showProductForm = true;
   }
 
+  // SỬA: editProduct giờ đơn giản hơn
   editProduct(product: Product): void {
     this.editingProduct = product;
+    
     this.productForm = { 
       ...product,
-      images: (product.images && product.images.length > 0) ? [...product.images] : ['']
+      // Đảm bảo các trường luôn có giá trị
+      videoUrl: product.videoUrl || null,
+      image: product.image || '',
+      images: (product.images && product.images.length > 0) ? product.images : ['']
     };
     this.showProductForm = true;
   }
 
+  // SỬA: saveProduct (logic mới)
   saveProduct(): void {
-    if (this.productForm.images) {
-      this.productForm.images = this.productForm.images.filter(url => url && url.trim() !== '');
-    }
     
+    // 1. Lấy danh sách ảnh gallery (lọc bỏ các chuỗi rỗng)
+    const finalGallery = (this.productForm.images || []).filter(url => url && url.trim() !== '');
+
+    // 2. Tạo payload gửi đi
+    const payload: Partial<Product> = { 
+      ...this.productForm, 
+      
+      // 3. (QUAN TRỌNG) Tự động gán ảnh bìa (image) bằng ảnh gallery đầu tiên
+      image: finalGallery[0] || '', // Lấy ảnh gallery đầu tiên làm ảnh bìa
+      
+      images: finalGallery, // Gửi mảng gallery
+      videoUrl: this.productForm.videoUrl // Gửi link video
+    };
+    
+    // 4. Gọi API
     if (this.editingProduct && this.editingProduct.id) {
-      this.productService.updateProduct(this.editingProduct.id, this.productForm).subscribe({
+      this.productService.updateProduct(this.editingProduct.id, payload).subscribe({
         next: () => {
           this.showProductForm = false;
           this.loadProducts();
@@ -170,10 +196,9 @@ export class Admin implements OnInit {
         error: (error) => console.error('Error updating product:', error)
       });
     } else {
-      const newProductData: Partial<Product> = { ...this.productForm };
-      delete newProductData.id; 
+      delete payload.id; 
       
-      this.productService.createProduct(newProductData).subscribe({
+      this.productService.createProduct(payload).subscribe({
         next: () => {
           this.showProductForm = false;
           this.loadProducts();
@@ -198,7 +223,8 @@ export class Admin implements OnInit {
     this.editingProduct = null;
   }
 
-  onFileSelected(event: Event, fieldType: 'image' | 'images', index?: number): void {
+  // SỬA: Bỏ 'image' khỏi fieldType, vì chúng ta không dùng trường upload ảnh bìa nữa
+  onFileSelected(event: Event, fieldType: 'video' | 'images', index?: number): void {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) {
       return;
@@ -212,15 +238,15 @@ export class Admin implements OnInit {
         if (response.success && response.url) {
           const fullUrl = `http://localhost:8080${response.url}`; 
           
-          if (fieldType === 'image') {
-            this.productForm.image = fullUrl;
+          if (fieldType === 'video') { // Case: Upload Video
+            this.productForm.videoUrl = fullUrl;
           } 
-          else if (fieldType === 'images' && index !== undefined && this.productForm.images) {
+          else if (fieldType === 'images' && index !== undefined) { // Case: Upload Ảnh Gallery
+            if (!this.productForm.images) this.productForm.images = [];
             this.productForm.images[index] = fullUrl;
           }
-          alert('Tải ảnh thành công!');
+          alert('Tải file thành công!');
         } else {
-          // SỬA LỖI TS2349: Thêm dấu +
           alert('Upload thất bại: ' + (response.message || 'Không rõ lỗi'));
         }
         this.isUploading = false;
@@ -245,7 +271,9 @@ export class Admin implements OnInit {
   }
 
   removeImageField(index: number): void {
-    this.productForm.images?.splice(index, 1);
+    if (this.productForm.images) {
+        this.productForm.images.splice(index, 1);
+    }
   }
 
   trackByFn(index: number, item: any): any {

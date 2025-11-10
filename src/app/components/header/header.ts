@@ -1,7 +1,8 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, HostListener } from '@angular/core'; // SỬA: Thêm ElementRef, HostListener
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, NavigationStart } from '@angular/router'; // SỬA: Thêm Router, NavigationStart
 import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators'; // SỬA: Thêm filter
 import { AuthService } from '../../services/auth';
 import { CartService } from '../../services/cart';
 
@@ -18,23 +19,36 @@ export class Header implements OnInit, OnDestroy {
   cartItemCount: number = 0;
   private userSubscription: Subscription | undefined;
   private cartSubscription: Subscription | undefined;
+  private routerSubscription: Subscription | undefined; 
 
   constructor(
     public authService: AuthService,
     public cartService: CartService,
-    private router: Router
+    private router: Router, 
+    private el: ElementRef 
   ) {}
 
+  
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    
+    
+    if (this.isUserMenuOpen && !this.el.nativeElement.contains(event.target)) {
+      this.isUserMenuOpen = false;
+    }
+    // Tương tự cho menu mobile
+    if (this.isMenuOpen && !this.el.nativeElement.contains(event.target)) {
+        this.isMenuOpen = false;
+    }
+  }
+
   ngOnInit(): void {
-    // Cập nhật số lượng giỏ hàng ban đầu
     this.cartItemCount = this.cartService.getCartItemCountSync();
 
-    // Subscribe để cập nhật real-time khi user thay đổi
     this.userSubscription = this.authService.currentUser$.subscribe(user => {
-      // Force update khi user thay đổi
+      // Cập nhật khi user thay đổi
     });
 
-    // Subscribe để cập nhật số lượng giỏ hàng
     this.cartSubscription = this.cartService.cartItems$.subscribe({
       next: (cartItems) => {
         this.cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -43,22 +57,32 @@ export class Header implements OnInit, OnDestroy {
         console.error('Error getting cart items:', error);
       }
     });
+
+    
+    this.routerSubscription = this.router.events.pipe(
+      filter(event => event instanceof NavigationStart)
+    ).subscribe(() => {
+      // Tự động đóng cả 2 menu khi bắt đầu chuyển trang
+      this.isUserMenuOpen = false;
+      this.isMenuOpen = false;
+    });
   }
 
   ngOnDestroy(): void {
-    if (this.userSubscription) {
-      this.userSubscription.unsubscribe();
-    }
-    if (this.cartSubscription) {
-      this.cartSubscription.unsubscribe();
-    }
+    this.userSubscription?.unsubscribe();
+    this.cartSubscription?.unsubscribe();
+    this.routerSubscription?.unsubscribe(); 
   }
 
-  toggleMenu(): void {
+  
+  toggleMenu(event?: Event): void {
+    event?.stopPropagation(); 
     this.isMenuOpen = !this.isMenuOpen;
   }
 
-  toggleUserMenu(): void {
+  
+  toggleUserMenu(event?: Event): void {
+    event?.stopPropagation(); 
     this.isUserMenuOpen = !this.isUserMenuOpen;
   }
 
@@ -71,7 +95,6 @@ export class Header implements OnInit, OnDestroy {
       error: (error: any) => {
         console.error('Logout error:', error);
         this.isUserMenuOpen = false;
-        // Clear storage locally nếu API fail
         localStorage.removeItem('auth_token');
         localStorage.removeItem('currentUser');
         this.router.navigate(['/home']);
