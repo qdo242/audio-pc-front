@@ -1,0 +1,212 @@
+:host {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1050;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Nút bấm tròn (Giữ nguyên) */
+.chat-toggle-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--primary-gradient);
+  color: white;
+  font-size: 1.5rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:hover {
+    background: var(--secondary-color);
+    transform: scale(1.1);
+  }
+}
+
+/* Cửa sổ chat (Giữ nguyên) */
+.chat-window {
+  width: 330px;
+  height: 420px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: pop-in 0.3s ease;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Header (Giữ nguyên) */
+.chat-header {
+  background: var(--primary-gradient);
+  color: white;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  h3 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+  .close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.8;
+    &:hover { opacity: 1; }
+  }
+}
+
+/* === SỬA LỖI QUAN TRỌNG Ở ĐÂY === */
+
+.chat-body {
+  flex: 1; 
+  padding: 1rem;
+  overflow-y: auto; // <-- Cho phép cuộn
+  background: white;
+  display: flex;
+  flex-direction: column; // <-- Xếp các mục theo chiều dọc
+  
+  // XÓA DÒNG NÀY: 
+  // justify-content: flex-end; <-- XÓA HOẶC THAY BẰNG "flex-start"
+  justify-content: flex-start; // <-- Đảm bảo tin nhắn bắt đầu từ trên
+}
+
+.chat-login-prompt {
+  // (Giữ nguyên)
+  margin: auto;
+  text-align: center;
+  color: var(--text-light);
+  padding: 1rem;
+  a { 
+    color: var(--primary-color); 
+    font-weight: 600; 
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+}
+
+.welcome-message {
+  // (Giữ nguyên)
+  text-align: center;
+  padding: 10px 0;
+  font-size: 0.85rem;
+  color: var(--text-light);
+  p {
+    display: inline-block;
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+}
+
+.messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  
+  // XÓA 2 DÒNG NÀY:
+  // flex: 1; 
+  // justify-content: flex-end; 
+}
+
+/* === KẾT THÚC SỬA LỖI === */
+
+
+.message {
+  display: flex;
+  flex-direction: column;
+
+  .msg-sender {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 2px;
+  }
+
+  .msg-content {
+    padding: 0.65rem 1rem;
+    border-radius: 18px;
+    max-width: 80%;
+    line-height: 1.4;
+    word-wrap: break-word;
+  }
+  
+  &.sent {
+    align-items: flex-end;
+    .msg-content {
+      background: var(--primary-color);
+      color: white;
+      border-bottom-right-radius: 5px;
+    }
+  }
+  &.received {
+    align-items: flex-start;
+    .msg-sender {
+      margin-left: 10px;
+    }
+    .msg-content {
+      background: #f1f5f9;
+      color: #334155;
+      border-bottom-left-radius: 5px;
+    }
+  }
+}
+
+.chat-footer {
+  // (Giữ nguyên)
+  display: flex;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-color);
+  background: white;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+
+  input {
+    flex: 1;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 0.65rem 1rem;
+    font-size: 0.95rem;
+    &:focus { 
+      outline: none; 
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    }
+    &:disabled { background: #f0f0f0; }
+  }
+  
+  .send-btn { 
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.2rem;
+    transition: background 0.3s ease;
+    flex-shrink: 0;
+    padding-left: 3px;
+
+    &:hover:not(:disabled) { background: var(--secondary-color); }
+    &:disabled { background: #ccc; }
+  }
+}

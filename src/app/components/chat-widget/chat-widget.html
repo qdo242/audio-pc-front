@@ -1,0 +1,53 @@
+<div class="chat-widget-container">
+  @if (isOpen) {
+    <div class="chat-window">
+      <div class="chat-header">
+        <h3>Chat với Atheng Audio</h3>
+        <button class="close-btn" (click)="toggleChat()">×</button>
+      </div>
+      
+      <div class="chat-body" #messagesListContainer>
+        @if (authService.isLoggedIn) {
+          
+          <div class="welcome-message">
+            <p>Chào bạn! Chúng tôi có thể giúp gì cho bạn?</p>
+          </div>
+
+          <div class="messages-list">
+            @for (msg of messages$ | async; track msg.id) {
+              <div class="message" [class.sent]="msg.from === authService.currentUserValue?.id" [class.received]="msg.from !== authService.currentUserValue?.id">
+                
+                @if (msg.from !== authService.currentUserValue?.id) {
+                  <span class="msg-sender">{{ msg.fromName }}</span>
+                }
+                
+                <span class="msg-content">{{ msg.content }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="chat-login-prompt">
+            Vui lòng <a routerLink="/login" (click)="toggleChat()">đăng nhập</a> để bắt đầu chat.
+          </div>
+        }
+      </div>
+
+      <div class="chat-footer">
+        <input 
+          type="text" 
+          placeholder="Nhập tin nhắn..." 
+          [(ngModel)]="newMessage"
+          (keyup.enter)="onSendMessage()"
+          [disabled]="!authService.isLoggedIn"
+        />
+        <button class="send-btn" (click)="onSendMessage()" [disabled]="!authService.isLoggedIn">
+          ➤
+        </button>
+      </div>
+    </div>
+  }
+
+  <button class="chat-toggle-btn" (click)="toggleChat()">
+    {{ isOpen ? '✕' : '💬' }}
+  </button>
+</div>
