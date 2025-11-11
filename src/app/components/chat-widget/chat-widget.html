@@ -6,14 +6,13 @@
         <button class="close-btn" (click)="toggleChat()">×</button>
       </div>
       
-      <div class="chat-body" #messagesListContainer>
+      <div class="chat-body">
         @if (authService.isLoggedIn) {
-          
-          <div class="welcome-message">
-            <p>Chào bạn! Chúng tôi có thể giúp gì cho bạn?</p>
-          </div>
-
           <div class="messages-list">
+            <div class="welcome-message">
+              <p>Chào bạn! Chúng tôi có thể giúp gì cho bạn?</p>
+            </div>
+
             @for (msg of messages$ | async; track msg.id) {
               <div class="message" [class.sent]="msg.from === authService.currentUserValue?.id" [class.received]="msg.from !== authService.currentUserValue?.id">
                 

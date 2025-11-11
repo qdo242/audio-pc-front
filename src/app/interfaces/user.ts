@@ -10,6 +10,7 @@ export interface User {
   updatedAt: Date;
   orders?: any[];
   wishlist?: string[];
+  unreadCount?: number;
 }
 
 export interface LoginRequest {

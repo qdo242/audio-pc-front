@@ -2,37 +2,35 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked }
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable, Subscription } from 'rxjs';
-import { ChatService,ChatMessage } from '../../services/chat';
+import { ChatService, ChatMessage } from '../../services/chat';
 import { AuthService } from '../../services/auth';
-import { RouterModule } from '@angular/router'; // Thêm RouterModule
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-chat-widget',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule], // Thêm RouterModule
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './chat-widget.html',
   styleUrls: ['./chat-widget.scss']
 })
 export class ChatWidget implements OnInit, OnDestroy, AfterViewChecked {
-  @ViewChild('messagesListContainer') private messagesListContainer!: ElementRef;
-
   isOpen = false;
   newMessage = '';
   messages$: Observable<ChatMessage[]>;
   private messageSubscription: Subscription | undefined;
-  private needsScroll = false; // Thêm cờ này
+  private shouldScrollToBottom = false;
 
   constructor(
     private chatService: ChatService,
-    public authService: AuthService
+    public authService: AuthService,
+    private elementRef: ElementRef
   ) {
     this.messages$ = this.chatService.messages$;
   }
 
   ngOnInit(): void {
     this.messageSubscription = this.messages$.subscribe(() => {
-      // Khi có tin nhắn mới (hoặc lịch sử), đánh dấu là cần cuộn
-      this.needsScroll = true; 
+      this.shouldScrollToBottom = true;
     });
   }
 
@@ -41,40 +39,40 @@ export class ChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   ngAfterViewChecked(): void {
-    // Chỉ cuộn NẾU cần thiết và cửa sổ đang mở
-    if (this.needsScroll && this.isOpen) {
+    if (this.shouldScrollToBottom && this.isOpen) {
       this.scrollToBottom();
-      this.needsScroll = false; // Reset cờ
+      this.shouldScrollToBottom = false;
     }
   }
 
   scrollToBottom(): void {
-    // SỬA LỖI Ở ĐÂY: Dùng setTimeout(..., 0)
-    // Buộc hàm này chạy trong chu kỳ tiếp theo, sau khi Angular đã render DOM
     setTimeout(() => {
       try {
-        if (this.messagesListContainer?.nativeElement) {
-          this.messagesListContainer.nativeElement.scrollTop = this.messagesListContainer.nativeElement.scrollHeight;
+        const messageList = this.elementRef.nativeElement.querySelector('.messages-list');
+        if (messageList) {
+          messageList.scrollTop = messageList.scrollHeight;
         }
-      } catch(err) { 
-        console.warn("Lỗi khi cuộn chat:", err);
+      } catch (err) {
+        console.error('Scroll error:', err);
       }
-    }, 0); 
+    }, 0);
   }
 
   toggleChat(): void {
     this.isOpen = !this.isOpen;
     if (this.isOpen) {
-      // Khi mở, đánh dấu cần cuộn để ngAfterViewChecked xử lý
-      this.needsScroll = true;
+      this.shouldScrollToBottom = true;
     }
   }
 
   onSendMessage(): void {
-    if (this.newMessage.trim() && this.authService.isLoggedIn) {
+    if (!this.newMessage.trim()) return;
+    
+    if (this.authService.isLoggedIn) {
       this.chatService.sendMessage(this.newMessage);
       this.newMessage = '';
-    } else if (!this.authService.isLoggedIn) {
+      this.shouldScrollToBottom = true;
+    } else {
       alert('Vui lòng đăng nhập để chat');
     }
   }

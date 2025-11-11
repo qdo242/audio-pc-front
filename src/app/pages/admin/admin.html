@@ -61,6 +61,13 @@
         >
           🛒 Quản Lý Đơn Hàng
         </button>
+        <button 
+          class="tab-header" 
+          [class.active]="activeTab === 'chat'" 
+          (click)="setActiveTab('chat')"
+        >
+          💬 Hỗ Trợ Khách Hàng
+        </button>
       </div>
 
       <div class="tab-content">
@@ -194,6 +201,84 @@
                   </div>
                 }
               </div>
+            </div>
+          </div>
+        }
+
+        @if (activeTab === 'chat') {
+          <div class="tab-pane chat-pane">
+            <div class="chat-layout">
+              
+              <div class="chat-sidebar">
+                <div class="sidebar-header">
+                  <h3>Hội thoại</h3>
+                </div>
+                <div class="conversation-list">
+                  @for (user of conversations; track user.id) {
+                    <div class="conversation-item" 
+                         [class.active]="selectedChatUser?.id === user.id"
+                         (click)="selectUserToChat(user)">
+                      
+                      <div class="user-avatar-container">
+                        <div class="user-avatar">{{ user.name.charAt(0).toUpperCase() }}</div>
+                        @if (user.unreadCount && user.unreadCount > 0) {
+                          <span class="unread-badge">{{ user.unreadCount }}</span>
+                        }
+                      </div>
+                      
+                      <div class="user-info">
+                        <div class="user-name">{{ user.name }}</div>
+                        <div class="user-email">{{ user.email }}</div>
+                      </div>
+                    </div>
+                  }
+                  @if (conversations.length === 0) {
+                    <div class="empty-conv">
+                      <p>Chưa có tin nhắn nào.</p>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="chat-main">
+                @if (selectedChatUser) {
+                  <div class="chat-header">
+                    <div class="user-avatar">{{ selectedChatUser.name.charAt(0).toUpperCase() }}</div>
+                    <div class="header-info">
+                      <h4>Chat với {{ selectedChatUser.name }}</h4>
+                      <span>{{ selectedChatUser.email }}</span>
+                    </div>
+                  </div>
+
+                  <div class="chat-messages" #chatContainer>
+                    @for (msg of chatMessages; track msg.id) {
+                      <div class="message" [class.sent]="msg.from === authService.currentUserValue?.id" [class.received]="msg.from !== authService.currentUserValue?.id">
+                        <div class="msg-bubble">
+                          {{ msg.content }}
+                        </div>
+                        <div class="msg-time">
+                          {{ msg.timestamp | date:'HH:mm' }}
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                  <div class="chat-input-area">
+                    <input type="text" 
+                           [(ngModel)]="adminMessage" 
+                           (keyup.enter)="sendAdminMessage()"
+                           placeholder="Nhập tin nhắn trả lời..." 
+                           class="chat-input">
+                    <button class="btn-send" (click)="sendAdminMessage()">➤</button>
+                  </div>
+                } @else {
+                  <div class="empty-chat-state">
+                    <div class="empty-icon">💬</div>
+                    <h3>Chọn một khách hàng để bắt đầu hỗ trợ</h3>
+                  </div>
+                }
+              </div>
+
             </div>
           </div>
         }
