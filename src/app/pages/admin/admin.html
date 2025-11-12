@@ -282,7 +282,10 @@
             </div>
           </div>
         }
-      </div> </div> @if (showProductForm) {
+      </div>
+    </div>
+
+    @if (showProductForm) {
       <div class="modal-overlay" [class.uploading]="isUploading">
         @if (isUploading) {
           <div class="upload-spinner">
@@ -335,7 +338,7 @@
                 </div>
 
                 <div class="form-group full-width">
-                  <label class="form-label">Video Sản Phẩm (Ưu tiên, sẽ hiển thị đầu tiên)</label>
+                  <label class="form-label">Video Sản Phẩm (Ưu tiên)</label>
                   <input type="file" (change)="onFileSelected($event, 'video')" class="form-input file-input" [disabled]="isUploading" accept="video/mp4,video/webm">
                   @if (productForm.videoUrl) {
                     <div class="image-preview">
@@ -346,7 +349,7 @@
                 </div>
 
                 <div class="form-group full-width">
-                  <label class="form-label">Ảnh Sản Phẩm (Ảnh đầu tiên sẽ được dùng làm ảnh bìa)</label>
+                  <label class="form-label">Ảnh Sản Phẩm</label>
                   <div class="features-list">
                     @for (image of productForm.images; track $index) {
                       <div class="feature-input-group">
@@ -359,19 +362,10 @@
                            </div>
                         }
                         
-                        <button
-                          type="button"
-                          class="remove-feature-btn"
-                          (click)="removeImageField($index)"
-                          [disabled]="isUploading"
-                        >
-                          ×
-                        </button>
+                        <button type="button" class="remove-feature-btn" (click)="removeImageField($index)" [disabled]="isUploading">×</button>
                       </div>
                     }
-                    <button type="button" class="add-feature-btn" (click)="addImageField()" [disabled]="isUploading">
-                      + Thêm Ảnh Sản Phẩm
-                    </button>
+                    <button type="button" class="add-feature-btn" (click)="addImageField()" [disabled]="isUploading">+ Thêm Ảnh Sản Phẩm</button>
                   </div>
                 </div>
 
@@ -390,15 +384,17 @@
                   </label>
                 </div>
               
-              </div> <div class="form-actions">
-                <button type="button" class="btn btn-secondary" (click)="cancelEdit()">
-                  Hủy
-                </button>
+              </div> 
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" (click)="cancelEdit()">Hủy</button>
                 <button type="submit" class="btn btn-primary" [disabled]="isUploading">
                   {{ isUploading ? 'Đang tải file...' : (editingProduct ? 'Cập Nhật' : 'Thêm Sản Phẩm') }}
                 </button>
               </div>
             </form>
-          </div> </div> </div> }
-    
-  </div> </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

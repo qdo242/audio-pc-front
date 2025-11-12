@@ -31,6 +31,9 @@ export class ChatService {
   private apiUrl = environment.apiUrl;
   private currentUserId: string | undefined;
 
+  // --- THÊM MỚI: Biến theo dõi người đang chat cùng (cho Admin) ---
+  private activeChatUserId: string | null = null;
+
   constructor(
     private authService: AuthService,
     private http: HttpClient
@@ -55,20 +58,21 @@ export class ChatService {
         connectHeaders: { 'Authorization': `Bearer ${token}` },
         reconnectDelay: 5000,
         onConnect: () => {
-            // Subscribe kênh: /topic/user/{userID}
+            // Subscribe kênh riêng của user: /topic/user/{userID}
             this.stompClient?.subscribe(`/topic/user/${this.currentUserId}`, (message: IMessage) => {
                 const body = JSON.parse(message.body);
                 
                 if (Array.isArray(body)) {
-                    // Nhận lịch sử chat (Array)
+                    // Nhận lịch sử chat (Mảng tin nhắn)
                     this.messageSubject.next(body);
                 } else {
-                    // Nhận tin nhắn mới (Single Object)
+                    // Nhận tin nhắn mới (1 Object tin nhắn)
                     const chatMessage: ChatMessage = body;
                     this.handleIncomingMessage(chatMessage);
                 }
             });
             
+            // Nếu là User thường, tự động tải lịch sử chat (với Admin)
             if (!this.authService.isAdminSync()) {
                 this.requestHistory();
             }
@@ -78,13 +82,29 @@ export class ChatService {
   }
 
   private handleIncomingMessage(chatMessage: ChatMessage) {
-    // 1. Bắn event để Admin cập nhật Sidebar (Unread count)
+    // 1. Luôn bắn event này để Admin component cập nhật Sidebar (số tin chưa đọc)
+    // Bất kể đang chat với ai, sidebar cần biết có tin nhắn mới để hiện chấm đỏ
     this.incomingMessageSubject.next(chatMessage);
 
-    // 2. Cập nhật vào khung chat hiện tại
+    // 2. --- THÊM MỚI: Logic lọc tin nhắn cho Admin ---
+    if (this.authService.isAdminSync()) {
+        // Kiểm tra xem tin nhắn này có thuộc cuộc hội thoại đang mở hay không
+        // (Là tin nhắn TỪ người đang chat HOẶC tin nhắn GỬI CHO người đang chat)
+        const isMessageForCurrentChat = 
+            this.activeChatUserId && 
+            (chatMessage.from === this.activeChatUserId || chatMessage.to === this.activeChatUserId);
+
+        // Nếu không phải cuộc hội thoại này, thì DỪNG LẠI
+        // Không đẩy vào danh sách hiển thị (messageSubject)
+        if (!isMessageForCurrentChat) {
+            return;
+        }
+    }
+
+    // 3. Cập nhật vào khung chat hiện tại (nếu thỏa mãn điều kiện trên)
     const currentMessages = this.messageSubject.value;
     
-    // Check trùng lặp ID (quan trọng để tránh duplicate)
+    // Kiểm tra trùng lặp ID để tránh hiển thị 2 lần
     if (!currentMessages.some(m => m.id === chatMessage.id)) {
         this.messageSubject.next([...currentMessages, chatMessage]);
     }
@@ -95,14 +115,21 @@ export class ChatService {
         this.stompClient.deactivate();
     }
     this.messageSubject.next([]);
+    this.activeChatUserId = null;
   }
 
   getConversations(): Observable<{success: boolean, users: any[]}> {
     return this.http.get<{success: boolean, users: any[]}>(`${this.apiUrl}/chat/conversations`);
   }
 
+  // Hàm được Admin gọi khi chọn một user từ sidebar
   loadChatWithUser(targetUserId: string): void {
+    // --- THÊM MỚI: Cập nhật ID người đang chat ---
+    this.activeChatUserId = targetUserId;
+
+    // Xóa tin nhắn cũ trên UI để chờ tải mới
     this.messageSubject.next([]);
+    
     if (this.stompClient?.active) {
       this.stompClient.publish({
         destination: '/app/chat.getHistory',
@@ -131,11 +158,17 @@ export class ChatService {
         timestamp: Date.now()
       };
 
-      // Gửi lên server và KHÔNG tự add vào danh sách (chờ server gửi về qua /topic)
+      // Gửi lên server và KHÔNG tự add vào danh sách ngay tại đây
+      // (Chờ server gửi lại qua /topic để đảm bảo đồng bộ và có ID)
       this.stompClient.publish({
         destination: '/app/chat.sendMessage',
         body: JSON.stringify(payload)
       });
     }
   }
+
+  sendMessageToBot(message: string): Observable<{response: string}> {
+    return this.http.post<{response: string}>(`${this.apiUrl}/bot/chat`, { message });
+  }
+
 }

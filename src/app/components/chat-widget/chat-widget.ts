@@ -16,6 +16,7 @@ import { RouterModule } from '@angular/router';
 export class ChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   isOpen = false;
   newMessage = '';
+  // Sử dụng messages$ thay vì history$
   messages$: Observable<ChatMessage[]>;
   private messageSubscription: Subscription | undefined;
   private shouldScrollToBottom = false;
@@ -25,10 +26,12 @@ export class ChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     public authService: AuthService,
     private elementRef: ElementRef
   ) {
+    // Gán đúng biến từ service
     this.messages$ = this.chatService.messages$;
   }
 
   ngOnInit(): void {
+    // Đăng ký lắng nghe để auto-scroll
     this.messageSubscription = this.messages$.subscribe(() => {
       this.shouldScrollToBottom = true;
     });

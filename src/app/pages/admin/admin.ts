@@ -57,8 +57,8 @@ export class Admin implements OnInit, AfterViewChecked {
     this.loadProducts();
     this.loadOrders();
     
-    // 1. Lấy tin nhắn hiển thị (bao gồm tin nhắn vừa gửi theo optimistic update)
-    this.chatService.messages$.subscribe(msgs => {
+    // SỬA Ở ĐÂY: Dùng messages$ thay vì history$
+    this.chatService.messages$.subscribe((msgs: ChatMessage[]) => {
       this.chatMessages = msgs;
       this.shouldScroll = true;
       this.cdr.detectChanges();
@@ -72,12 +72,13 @@ export class Admin implements OnInit, AfterViewChecked {
     });
   }
 
+  // ... (Giữ nguyên các hàm handleSidebarUpdate, getFullImageUrl, getSafeDisplayImage, loadProducts, loadOrders, calculateStats, setActiveTab, loadConversations)
+
   handleSidebarUpdate(msg: ChatMessage) {
     const currentAdminId = this.authService.currentUserValue?.id;
 
-    // Nếu là tin nhắn MÌNH GỬI hoặc tin nhắn ĐANG MỞ -> Không cần báo unread, chỉ cần đảm bảo nó hiển thị
+    // Nếu là tin nhắn MÌNH GỬI hoặc tin nhắn ĐANG MỞ -> Không cần báo unread
     if (msg.from === currentAdminId || (this.selectedChatUser && msg.from === this.selectedChatUser.id)) {
-        // Không làm gì với sidebar, chatMessages đã tự update
         return; 
     }
     
@@ -86,18 +87,18 @@ export class Admin implements OnInit, AfterViewChecked {
 
     if (senderIndex > -1) {
         const sender = this.conversations[senderIndex];
-        // Tăng số tin chưa đọc
         sender.unreadCount = (sender.unreadCount || 0) + 1;
         
         // Đưa lên đầu danh sách
         this.conversations.splice(senderIndex, 1);
         this.conversations.unshift(sender);
     } else {
-        // Khách mới -> Tải lại danh sách
         this.loadConversations();
     }
     this.cdr.detectChanges();
   }
+
+  // ... (Giữ nguyên các hàm helper ảnh)
 
   getFullImageUrl(url: string | undefined): string {
     const defaultPlaceholder = 'assets/images/default-product.png';
@@ -175,7 +176,6 @@ export class Admin implements OnInit, AfterViewChecked {
   sendAdminMessage(): void {
     if (!this.adminMessage.trim() || !this.selectedChatUser) return;
     
-    // Service sẽ tự động thêm vào danh sách hiển thị ngay lập tức
     this.chatService.sendMessage(this.adminMessage, this.selectedChatUser.id);
     
     this.adminMessage = '';
@@ -189,6 +189,8 @@ export class Admin implements OnInit, AfterViewChecked {
     }
   }
 
+  // ... (Giữ nguyên các hàm quản lý sản phẩm và đơn hàng: addProduct, editProduct, saveProduct, deleteProduct, cancelEdit, onFileSelected, addImageField, removeImageField, updateOrderStatus, viewOrder, deleteOrder, getStatusText, getStatusColor, logout)
+  
   addProduct(): void {
     this.editingProduct = null;
     this.productForm = { name: '', price: 0, originalPrice: 0, category: 'headphone', brand: 'Atheng Audio', description: '', videoUrl: null, image: '', images: [''], stock: 100, isActive: true, isFeatured: false, rating: 0, reviewCount: 0 };
@@ -247,8 +249,7 @@ export class Admin implements OnInit, AfterViewChecked {
 
   addImageField(): void { if (!this.productForm.images) { this.productForm.images = []; } this.productForm.images.push(''); }
   removeImageField(index: number): void { if (this.productForm.images) { this.productForm.images.splice(index, 1); } }
-  trackByFn(index: number, item: any): any { return index; }
-
+  
   updateOrderStatus(orderId: string | undefined, event: Event): void {
     if (!orderId) return;
     const target = event.target as HTMLSelectElement;
