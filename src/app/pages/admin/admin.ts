@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -34,6 +34,7 @@ export class Admin implements OnInit, AfterViewChecked {
 
   stats = { totalProducts: 0, totalOrders: 0, totalRevenue: 0, outOfStock: 0 };
 
+  // Chat Variables
   conversations: User[] = [];
   selectedChatUser: User | null = null;
   adminMessage: string = '';
@@ -48,35 +49,54 @@ export class Admin implements OnInit, AfterViewChecked {
     private fileService: FileService, 
     private router: Router,
     private chatService: ChatService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
     this.loadProducts();
     this.loadOrders();
     
+    // 1. Lấy tin nhắn hiển thị (bao gồm tin nhắn vừa gửi theo optimistic update)
     this.chatService.messages$.subscribe(msgs => {
       this.chatMessages = msgs;
       this.shouldScroll = true;
-    });
-
-    this.chatService.onMessage$.subscribe((msg: ChatMessage) => {
-      if (this.selectedChatUser && (msg.from === this.selectedChatUser.id || msg.to === this.selectedChatUser.id)) {
-        if (!this.chatMessages.some(m => m.id === msg.id)) {
-           this.chatMessages.push(msg);
-           this.shouldScroll = true;
-        }
-      } else {
-        const sender = this.conversations.find(u => u.id === msg.from);
-        if (sender) {
-          sender.unreadCount = (sender.unreadCount || 0) + 1;
-          this.conversations = [sender, ...this.conversations.filter(u => u.id !== msg.from)];
-        } else {
-          this.loadConversations();
-        }
-      }
       this.cdr.detectChanges();
     });
+
+    // 2. Lắng nghe tin nhắn realtime để cập nhật Sidebar
+    this.chatService.onMessage$.subscribe((msg: ChatMessage) => {
+      this.ngZone.run(() => {
+        this.handleSidebarUpdate(msg);
+      });
+    });
+  }
+
+  handleSidebarUpdate(msg: ChatMessage) {
+    const currentAdminId = this.authService.currentUserValue?.id;
+
+    // Nếu là tin nhắn MÌNH GỬI hoặc tin nhắn ĐANG MỞ -> Không cần báo unread, chỉ cần đảm bảo nó hiển thị
+    if (msg.from === currentAdminId || (this.selectedChatUser && msg.from === this.selectedChatUser.id)) {
+        // Không làm gì với sidebar, chatMessages đã tự update
+        return; 
+    }
+    
+    // Nếu là tin nhắn TỪ NGƯỜI KHÁC (mà mình không đang chat)
+    const senderIndex = this.conversations.findIndex(u => u.id === msg.from);
+
+    if (senderIndex > -1) {
+        const sender = this.conversations[senderIndex];
+        // Tăng số tin chưa đọc
+        sender.unreadCount = (sender.unreadCount || 0) + 1;
+        
+        // Đưa lên đầu danh sách
+        this.conversations.splice(senderIndex, 1);
+        this.conversations.unshift(sender);
+    } else {
+        // Khách mới -> Tải lại danh sách
+        this.loadConversations();
+    }
+    this.cdr.detectChanges();
   }
 
   getFullImageUrl(url: string | undefined): string {
@@ -148,13 +168,16 @@ export class Admin implements OnInit, AfterViewChecked {
 
   selectUserToChat(user: User): void {
     this.selectedChatUser = user;
-    user.unreadCount = 0;
+    user.unreadCount = 0; // Đã xem
     this.chatService.loadChatWithUser(user.id);
   }
 
   sendAdminMessage(): void {
     if (!this.adminMessage.trim() || !this.selectedChatUser) return;
+    
+    // Service sẽ tự động thêm vào danh sách hiển thị ngay lập tức
     this.chatService.sendMessage(this.adminMessage, this.selectedChatUser.id);
+    
     this.adminMessage = '';
     this.shouldScroll = true;
   }

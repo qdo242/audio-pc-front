@@ -50,23 +50,23 @@ export class ChatService {
     if (!this.currentUserId || !token || this.stompClient?.active) return;
 
     this.stompClient = Stomp.over(() => new SockJS(this.serverUrl));
+    
     this.stompClient.configure({
         connectHeaders: { 'Authorization': `Bearer ${token}` },
         reconnectDelay: 5000,
         onConnect: () => {
-            this.stompClient?.subscribe(`/user/${this.currentUserId}/queue/reply`, (message: IMessage) => {
-                const chatMessage: ChatMessage = JSON.parse(message.body);
-                this.incomingMessageSubject.next(chatMessage);
-
-                const currentMessages = this.messageSubject.value;
-                if (!currentMessages.some(m => m.id === chatMessage.id)) {
-                    this.messageSubject.next([...currentMessages, chatMessage]);
+            // Subscribe kênh: /topic/user/{userID}
+            this.stompClient?.subscribe(`/topic/user/${this.currentUserId}`, (message: IMessage) => {
+                const body = JSON.parse(message.body);
+                
+                if (Array.isArray(body)) {
+                    // Nhận lịch sử chat (Array)
+                    this.messageSubject.next(body);
+                } else {
+                    // Nhận tin nhắn mới (Single Object)
+                    const chatMessage: ChatMessage = body;
+                    this.handleIncomingMessage(chatMessage);
                 }
-            });
-
-            this.stompClient?.subscribe(`/user/${this.currentUserId}/queue/history`, (message: IMessage) => {
-                const history: ChatMessage[] = JSON.parse(message.body);
-                this.messageSubject.next(history);
             });
             
             if (!this.authService.isAdminSync()) {
@@ -77,8 +77,23 @@ export class ChatService {
     this.stompClient.activate();
   }
 
+  private handleIncomingMessage(chatMessage: ChatMessage) {
+    // 1. Bắn event để Admin cập nhật Sidebar (Unread count)
+    this.incomingMessageSubject.next(chatMessage);
+
+    // 2. Cập nhật vào khung chat hiện tại
+    const currentMessages = this.messageSubject.value;
+    
+    // Check trùng lặp ID (quan trọng để tránh duplicate)
+    if (!currentMessages.some(m => m.id === chatMessage.id)) {
+        this.messageSubject.next([...currentMessages, chatMessage]);
+    }
+  }
+
   public disconnect(): void {
-    this.stompClient?.deactivate();
+    if (this.stompClient) {
+        this.stompClient.deactivate();
+    }
     this.messageSubject.next([]);
   }
 
@@ -108,28 +123,15 @@ export class ChatService {
   public sendMessage(content: string, toUserId?: string): void {
     if (this.stompClient?.active && this.currentUserId) {
       
-      const targetId = toUserId || 'admin';
-
-      const tempMessage: ChatMessage = {
-        id: 'temp-' + Date.now(),
+      const payload = {
         from: this.currentUserId,
-        to: targetId,
-        fromName: this.authService.userName || 'Tôi',
+        to: toUserId, 
         content: content,
+        fromName: this.authService.userName,
         timestamp: Date.now()
       };
 
-      const currentMessages = this.messageSubject.value;
-      this.messageSubject.next([...currentMessages, tempMessage]);
-
-      const payload = {
-        from: this.currentUserId,
-        to: targetId,
-        content: content,
-        fromName: this.authService.userName,
-        timestamp: 0
-      };
-
+      // Gửi lên server và KHÔNG tự add vào danh sách (chờ server gửi về qua /topic)
       this.stompClient.publish({
         destination: '/app/chat.sendMessage',
         body: JSON.stringify(payload)
