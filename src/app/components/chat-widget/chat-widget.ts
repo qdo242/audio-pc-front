@@ -1,11 +1,11 @@
-import { Component, OnInit, OnDestroy, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, AfterViewChecked, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable, Subscription, BehaviorSubject, combineLatest } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, filter } from 'rxjs/operators';
 import { ChatService, ChatMessage } from '../../services/chat';
 import { AuthService } from '../../services/auth';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router, NavigationStart } from '@angular/router'; // Import thêm Router
 
 @Component({
   selector: 'app-chat-widget',
@@ -28,33 +28,51 @@ export class ChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   constructor(
     private chatService: ChatService,
     public authService: AuthService,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    private router: Router // Inject Router để bắt sự kiện chuyển trang
   ) {
-    // Kết hợp 3 luồng: Chế độ chat + Kho Bot + Kho Admin
     this.displayMessages$ = combineLatest([
       this.chatModeSubject,
       this.chatService.botMessages$,
       this.chatService.adminMessages$
     ]).pipe(
       map(([mode, botMsgs, adminMsgs]) => {
-        this.shouldScrollToBottom = true;
+        if (this.isOpen) this.shouldScrollToBottom = true;
         return mode === 'BOT' ? botMsgs : adminMsgs;
       })
     );
   }
 
+  // 1. Bắt sự kiện Click toàn màn hình (Để đóng khi click ra ngoài khoảng không)
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    // Nếu widget đang mở VÀ click KHÔNG nằm trong phạm vi widget -> Đóng lại
+    if (this.isOpen && !this.elementRef.nativeElement.contains(event.target)) {
+      this.isOpen = false;
+    }
+  }
+
   ngOnInit(): void {
-    // Khôi phục tab cũ từ LocalStorage
+    // Khôi phục chế độ chat cũ
     const savedMode = localStorage.getItem('chat_widget_mode');
     if (savedMode === 'ADMIN' || savedMode === 'BOT') {
       this.chatModeSubject.next(savedMode);
     }
 
-    // Admin dùng widget thì luôn về BOT
     if (this.authService.isAdminSync()) {
       this.chatModeSubject.next('BOT');
     }
 
+    // 2. Bắt sự kiện Chuyển Trang (Để đóng khi click vào link sang trang khác)
+    this.subscriptions.push(
+      this.router.events.pipe(
+        filter(event => event instanceof NavigationStart)
+      ).subscribe(() => {
+        this.isOpen = false; // Tự động thu lại khi bắt đầu chuyển trang
+      })
+    );
+
+    // Lắng nghe tin nhắn để tắt hiệu ứng typing
     this.subscriptions.push(
       this.chatService.onMessage$.subscribe((msg) => {
         if (msg.from === 'BOT') {
@@ -85,19 +103,20 @@ export class ChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       } catch (err) {
         console.error('Scroll error:', err);
       }
-    }, 0);
+    }, 50);
   }
 
   toggleChat(): void {
     this.isOpen = !this.isOpen;
     if (this.isOpen) {
       this.shouldScrollToBottom = true;
+      this.switchMode(this.chatMode); // Load lại data để đảm bảo mới nhất
     }
   }
 
   switchMode(mode: 'BOT' | 'ADMIN'): void {
     this.chatModeSubject.next(mode);
-    localStorage.setItem('chat_widget_mode', mode); // Lưu lại để F5 nhớ
+    localStorage.setItem('chat_widget_mode', mode);
     this.shouldScrollToBottom = true;
   }
 

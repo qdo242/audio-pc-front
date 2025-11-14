@@ -3,7 +3,8 @@
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   position: sticky;
   top: 0;
-  z-index: 1000;
+  /* QUAN TRỌNG: Z-Index cao nhất để đè lên mọi thứ */
+  z-index: 10000; 
 
   .container {
     max-width: 1200px;
@@ -22,7 +23,6 @@
 .logo {
   a {
     text-decoration: none;
-    
     h1 {
       color: #007bff;
       margin: 0;
@@ -194,12 +194,15 @@
     background: white;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    min-width: 250px;
+    min-width: 260px;
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     border: 1px solid #e9ecef;
+    
+    /* QUAN TRỌNG: Z-Index cực cao để dropdown nổi lên trên mọi thứ */
+    z-index: 10001; 
 
     &.active {
       opacity: 1;
@@ -220,7 +223,7 @@
 
       small {
         color: #666;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         display: block;
         margin-bottom: 3px;
 
@@ -251,13 +254,17 @@
       padding: 12px 20px;
       text-decoration: none;
       color: #333;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
       border: none;
-      background: none;
+      background: transparent;
       width: 100%;
       text-align: left;
-      cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
+      
+      /* QUAN TRỌNG: Ép buộc hiển thị con trỏ tay */
+      cursor: pointer !important;
+      position: relative;
+      z-index: 10002;
 
       &:hover {
         background: #f8f9fa;
@@ -266,7 +273,6 @@
 
       &.logout {
         color: #dc3545;
-
         &:hover {
           background: #f8d7da;
           color: #721c24;
@@ -277,7 +283,6 @@
         background: #fff3cd;
         color: #856404;
         font-weight: 600;
-
         &:hover {
           background: #ffeaa7;
         }
@@ -318,7 +323,7 @@
   right: 0;
   bottom: 0;
   background: rgba(0,0,0,0.5);
-  z-index: 999;
+  z-index: 9999; /* Thấp hơn Header một chút */
 
   &.active {
     display: block;
@@ -344,7 +349,7 @@
     visibility: hidden;
     transform: translateY(-10px);
     transition: all 0.3s ease;
-    z-index: 1000;
+    z-index: 10000; /* Đảm bảo mobile menu cũng nổi lên trên */
 
     &.active {
       opacity: 1;

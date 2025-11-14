@@ -7,7 +7,7 @@
         </a>
       </div>
 
-      <nav class="nav" [class.active]="isMenuOpen" (click)="$event.stopPropagation()">
+      <nav class="nav" [class.active]="isMenuOpen">
         <a routerLink="/home" routerLinkActive="active" (click)="isMenuOpen = false">Trang chủ</a>
         <a routerLink="/products" routerLinkActive="active" (click)="isMenuOpen = false">Sản phẩm</a>
         <a routerLink="/about" routerLinkActive="active" (click)="isMenuOpen = false">Giới thiệu</a>
@@ -32,7 +32,7 @@
         </a>
 
         <div class="user-menu" *ngIf="authService.isLoggedIn; else loginButton">
-          <button class="user-btn" (click)="toggleUserMenu($event)">
+          <button class="user-btn" (click)="toggleUserMenu()">
             <span class="user-avatar" [title]="userName">
               {{ userInitials }}
             </span>
@@ -40,7 +40,7 @@
             <span class="dropdown-arrow">▼</span>
           </button>
 
-          <div class="user-dropdown" [class.active]="isUserMenuOpen" (click)="$event.stopPropagation()">
+          <div class="user-dropdown" [class.active]="isUserMenuOpen">
             <div class="user-info">
               <strong>{{ userName }}</strong>
               <small>
@@ -53,13 +53,13 @@
             
             <div class="dropdown-divider"></div>
             
-            <a routerLink="/profile" class="dropdown-item" (click)="isUserMenuOpen = false">
+            <a class="dropdown-item" href="javascript:void(0)" (click)="navigateAndClose('/profile')">
               👤 Hồ sơ cá nhân
             </a>
-            <a routerLink="/orders" class="dropdown-item" (click)="isUserMenuOpen = false">
+            <a class="dropdown-item" href="javascript:void(0)" (click)="navigateAndClose('/orders')">
               📦 Đơn hàng của tôi
             </a>
-            <a routerLink="/wishlist" class="dropdown-item" (click)="isUserMenuOpen = false">
+            <a class="dropdown-item" href="javascript:void(0)" (click)="navigateAndClose('/wishlist')">
               ❤️ Danh sách yêu thích
               <span class="wishlist-count" *ngIf="authService.currentUserValue?.wishlist?.length">
                 ({{ authService.currentUserValue?.wishlist?.length }})
@@ -68,7 +68,7 @@
             
             <div class="dropdown-divider"></div>
             
-            <a *ngIf="isAdmin" routerLink="/admin" class="dropdown-item admin-link" (click)="isUserMenuOpen = false">
+            <a *ngIf="isAdmin" class="dropdown-item admin-link" href="javascript:void(0)" (click)="navigateAndClose('/admin')">
               ⚙️ Trang quản trị
             </a>
             
@@ -87,7 +87,7 @@
           </div>
         </ng-template>
 
-        <button class="mobile-menu-toggle" (click)="toggleMenu($event)">
+        <button class="mobile-menu-toggle" (click)="toggleMenu()">
           ☰
         </button>
       </div>

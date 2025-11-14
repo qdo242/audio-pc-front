@@ -6,6 +6,18 @@
   right: 2rem;
   z-index: 9999;
   font-family: 'Inter', sans-serif;
+  /* QUAN TRỌNG: Cho phép chuột bấm "xuyên qua" vùng bao quanh widget */
+  pointer-events: none; 
+}
+
+.chat-widget-container {
+  pointer-events: auto; /* Bật lại khả năng click cho cửa sổ và nút */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  
+  /* QUAN TRỌNG: Căn tất cả (Cửa sổ + Nút) về phía bên PHẢI */
+  align-items: flex-end; 
 }
 
 /* --- NÚT MỞ CHAT --- */
@@ -24,6 +36,7 @@
   align-items: center;
   justify-content: center;
   position: relative;
+  z-index: 10000; /* Đảm bảo nút luôn nổi trên cùng */
 
   &:hover {
     transform: scale(1.1) rotate(10deg);
@@ -32,8 +45,8 @@
 
   &:active { transform: scale(0.95); }
   
-  .chat-icon, .close-icon {
-    transition: opacity 0.3s ease;
+  .icon {
+    transition: transform 0.3s ease;
   }
 }
 
@@ -47,10 +60,23 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.5rem; /* Khoảng cách giữa cửa sổ và nút */
   transform-origin: bottom right;
   animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   border: 1px solid rgba(255,255,255,0.5);
+  
+  /* Trạng thái đóng (Mặc định) */
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0) translateY(20px);
+  transition: all 0.35s cubic-bezier(0.19, 1, 0.22, 1);
+
+  /* Trạng thái mở (Thêm class .open) */
+  &.open {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1) translateY(0);
+  }
 }
 
 @keyframes popIn {
@@ -217,7 +243,6 @@
     position: relative;
   }
 
-  /* Tin nhắn mình gửi */
   &.sent {
     align-self: flex-end;
     align-items: flex-end;
@@ -230,7 +255,6 @@
     }
   }
 
-  /* Tin nhắn nhận được */
   &.received {
     align-self: flex-start;
     align-items: flex-start;

@@ -1,89 +1,88 @@
 <div class="chat-widget-container">
-  @if (isOpen) {
-    <div class="chat-window">
-      <div class="chat-header">
-        <div class="header-info">
-          <h3>{{ chatMode === 'BOT' ? 'Atheng AI 🤖' : 'Hỗ Trợ Viên 👨‍💻' }}</h3>
-          
-          @if (authService.isLoggedIn && !isUserAdmin) {
-            <div class="mode-switch">
-              <button 
-                class="switch-btn" 
-                [class.active]="chatMode === 'BOT'"
-                (click)="switchMode('BOT')"
-                title="Chat với AI">
-                🤖
-              </button>
-              <button 
-                class="switch-btn" 
-                [class.active]="chatMode === 'ADMIN'"
-                (click)="switchMode('ADMIN')"
-                title="Chat với Nhân viên">
-                👨‍💻
-              </button>
-            </div>
-          }
-        </div>
-        <button class="close-btn" (click)="toggleChat()">×</button>
-      </div>
-      
-      <div class="chat-body">
-        @if (authService.isLoggedIn) {
-          <div class="messages-list">
-            <div class="welcome-message">
-              <p>
-                @if (chatMode === 'BOT') {
-                  Chào bạn! Mình là AI của Atheng Audio. Bạn cần tìm tai nghe hay loa gì nhỉ?
-                } @else {
-                  Đây là kênh chat trực tiếp với nhân viên. Vui lòng chờ phản hồi.
-                }
-              </p>
-            </div>
-
-            @for (msg of displayMessages$ | async; track msg.id) {
-              <div class="message" 
-                   [class.sent]="msg.from === authService.currentUserValue?.id" 
-                   [class.received]="msg.from !== authService.currentUserValue?.id">
-                
-                @if (msg.from !== authService.currentUserValue?.id) {
-                  <span class="msg-sender">{{ msg.fromName }}</span>
-                }
-                
-                <span class="msg-content" [innerHTML]="msg.content"></span>
-              </div>
-            }
-
-            @if (isBotTyping && chatMode === 'BOT') {
-              <div class="message received">
-                <span class="msg-sender">Trợ lý AI</span>
-                <span class="msg-content typing">
-                  <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-                </span>
-              </div>
-            }
-          </div>
-        } @else {
-          <div class="chat-login-prompt">
-            <p>👋 Xin chào!</p>
-            <p>Vui lòng <a routerLink="/login" (click)="toggleChat()">đăng nhập</a> để bắt đầu chat.</p>
+  
+  <div class="chat-window" [class.open]="isOpen">
+    <div class="chat-header">
+      <div class="header-info">
+        <h3>{{ chatMode === 'BOT' ? 'Atheng AI 🤖' : 'Hỗ Trợ Viên 👨‍💻' }}</h3>
+        
+        @if (authService.isLoggedIn && !isUserAdmin) {
+          <div class="mode-switch">
+            <button 
+              class="switch-btn" 
+              [class.active]="chatMode === 'BOT'"
+              (click)="switchMode('BOT')"
+              title="Chat với AI">
+              🤖
+            </button>
+            <button 
+              class="switch-btn" 
+              [class.active]="chatMode === 'ADMIN'"
+              (click)="switchMode('ADMIN')"
+              title="Chat với Nhân viên">
+              👨‍💻
+            </button>
           </div>
         }
       </div>
-
-      <div class="chat-footer">
-        <input 
-          type="text" 
-          [placeholder]="chatMode === 'BOT' ? 'Hỏi AI...' : 'Nhắn cho Admin...'"
-          [(ngModel)]="newMessage"
-          (keyup.enter)="onSendMessage()"
-          [disabled]="!authService.isLoggedIn"
-        />
-        <button class="send-btn" (click)="onSendMessage()" [disabled]="!authService.isLoggedIn">➤</button>
-      </div>
+      <button class="close-btn" (click)="isOpen = false">×</button>
     </div>
-  }
+    
+    <div class="chat-body">
+      @if (authService.isLoggedIn) {
+        <div class="messages-list">
+          <div class="welcome-message">
+            <p>
+              @if (chatMode === 'BOT') {
+                Chào bạn! Mình là AI của Atheng Audio. Bạn cần tìm tai nghe hay loa gì nhỉ?
+              } @else {
+                Đây là kênh chat trực tiếp với nhân viên. Vui lòng chờ phản hồi.
+              }
+            </p>
+          </div>
+
+          @for (msg of displayMessages$ | async; track msg.id) {
+            <div class="message" 
+                 [class.sent]="msg.from === authService.currentUserValue?.id" 
+                 [class.received]="msg.from !== authService.currentUserValue?.id">
+              
+              @if (msg.from !== authService.currentUserValue?.id) {
+                <span class="msg-sender">{{ msg.fromName }}</span>
+              }
+              
+              <span class="msg-content" [innerHTML]="msg.content"></span>
+            </div>
+          }
+
+          @if (isBotTyping && chatMode === 'BOT') {
+            <div class="message received">
+              <span class="msg-sender">Trợ lý AI</span>
+              <span class="msg-content typing">
+                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+              </span>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="chat-login-prompt">
+          <p>👋 Xin chào!</p>
+          <p>Vui lòng <a routerLink="/login" (click)="isOpen = false">đăng nhập</a> để bắt đầu chat.</p>
+        </div>
+      }
+    </div>
+
+    <div class="chat-footer">
+      <input 
+        type="text" 
+        [placeholder]="chatMode === 'BOT' ? 'Hỏi AI...' : 'Nhắn cho Admin...'"
+        [(ngModel)]="newMessage"
+        (keyup.enter)="onSendMessage()"
+        [disabled]="!authService.isLoggedIn"
+      />
+      <button class="send-btn" (click)="onSendMessage()" [disabled]="!authService.isLoggedIn">➤</button>
+    </div>
+  </div>
 
   <button class="chat-toggle-btn" (click)="toggleChat()">
-    {{ isOpen ? '✕' : '💬' }}
+    <span class="icon">{{ isOpen ? '✕' : '💬' }}</span>
   </button>
 </div>
