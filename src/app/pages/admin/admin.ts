@@ -39,6 +39,7 @@ export class Admin implements OnInit, AfterViewChecked {
   selectedChatUser: User | null = null;
   adminMessage: string = '';
   chatMessages: ChatMessage[] = [];
+  
   @ViewChild('chatContainer') private chatContainer!: ElementRef;
   private shouldScroll = false;
 
@@ -57,49 +58,101 @@ export class Admin implements OnInit, AfterViewChecked {
     this.loadProducts();
     this.loadOrders();
     
-    // SỬA Ở ĐÂY: Dùng messages$ thay vì history$
-    this.chatService.messages$.subscribe((msgs: ChatMessage[]) => {
-      this.chatMessages = msgs;
-      this.shouldScroll = true;
-      this.cdr.detectChanges();
+    // 1. Lắng nghe kho tin nhắn ADMIN để hiển thị trong khung chat
+    this.chatService.adminMessages$.subscribe((msgs: ChatMessage[]) => {
+      // Chỉ cập nhật nếu đang mở khung chat
+      if (this.selectedChatUser) {
+        this.chatMessages = msgs;
+        this.shouldScroll = true;
+        this.cdr.detectChanges();
+      }
     });
 
-    // 2. Lắng nghe tin nhắn realtime để cập nhật Sidebar
+    // 2. Lắng nghe sự kiện tin nhắn mới để cập nhật Sidebar (Real-time)
     this.chatService.onMessage$.subscribe((msg: ChatMessage) => {
       this.ngZone.run(() => {
         this.handleSidebarUpdate(msg);
       });
     });
+    
+    // Tải danh sách hội thoại lần đầu
+    this.loadConversations();
   }
 
-  // ... (Giữ nguyên các hàm handleSidebarUpdate, getFullImageUrl, getSafeDisplayImage, loadProducts, loadOrders, calculateStats, setActiveTab, loadConversations)
-
+  // Xử lý logic cập nhật Sidebar khi có tin mới
   handleSidebarUpdate(msg: ChatMessage) {
+    // Bỏ qua tin nhắn của Bot
+    if (msg.from === 'BOT' || msg.to === 'BOT') return;
+
     const currentAdminId = this.authService.currentUserValue?.id;
 
-    // Nếu là tin nhắn MÌNH GỬI hoặc tin nhắn ĐANG MỞ -> Không cần báo unread
-    if (msg.from === currentAdminId || (this.selectedChatUser && msg.from === this.selectedChatUser.id)) {
-        return; 
-    }
-    
-    // Nếu là tin nhắn TỪ NGƯỜI KHÁC (mà mình không đang chat)
-    const senderIndex = this.conversations.findIndex(u => u.id === msg.from);
+    // Xác định đối phương là ai (Người gửi hoặc Người nhận, miễn ko phải là Admin)
+    const partnerId = (msg.from === currentAdminId) ? msg.to : msg.from;
 
-    if (senderIndex > -1) {
-        const sender = this.conversations[senderIndex];
-        sender.unreadCount = (sender.unreadCount || 0) + 1;
+    // Tìm xem đối phương đã có trong danh sách chưa
+    const index = this.conversations.findIndex(u => u.id === partnerId);
+
+    if (index > -1) {
+        const user = this.conversations[index];
         
-        // Đưa lên đầu danh sách
-        this.conversations.splice(senderIndex, 1);
-        this.conversations.unshift(sender);
+        // Nếu Admin KHÔNG đang chat với người này -> Tăng unread
+        // (Nếu msg.from === currentAdminId nghĩa là Admin gửi, không cần tăng unread)
+        if (msg.from !== currentAdminId && (!this.selectedChatUser || this.selectedChatUser.id !== partnerId)) {
+            user.unreadCount = (user.unreadCount || 0) + 1;
+        }
+
+        // Đẩy lên đầu danh sách
+        this.conversations.splice(index, 1);
+        this.conversations.unshift(user);
+        
     } else {
+        // Nếu chưa có (User mới nhắn tin lần đầu) -> Tải lại danh sách
         this.loadConversations();
     }
     this.cdr.detectChanges();
   }
 
-  // ... (Giữ nguyên các hàm helper ảnh)
+  ngAfterViewChecked() {
+    if (this.shouldScroll && this.chatContainer) {
+      this.chatContainer.nativeElement.scrollTop = this.chatContainer.nativeElement.scrollHeight;
+      this.shouldScroll = false;
+    }
+  }
 
+  // === CÁC HÀM CHAT ===
+
+  loadConversations(): void {
+    this.chatService.getConversations().subscribe({
+      next: (res) => {
+        if (res.success) {
+          // Giữ lại trạng thái unread cũ nếu reload
+          const oldConversations = this.conversations;
+          this.conversations = res.users.map(u => {
+            const old = oldConversations.find(oldU => oldU.id === u.id);
+            return { ...u, unreadCount: old ? old.unreadCount : 0 };
+          });
+        }
+      },
+      error: (err) => console.error('Lỗi tải hội thoại:', err)
+    });
+  }
+
+  selectUserToChat(user: User): void {
+    this.selectedChatUser = user;
+    user.unreadCount = 0; // Đánh dấu đã đọc
+    this.chatService.loadChatWithUser(user.id); // Gọi service load tin nhắn
+  }
+
+  sendAdminMessage(): void {
+    if (!this.adminMessage.trim() || !this.selectedChatUser) return;
+    
+    this.chatService.sendMessage(this.adminMessage, this.selectedChatUser.id);
+    this.adminMessage = '';
+    this.shouldScroll = true;
+  }
+
+  // === CÁC HÀM QUẢN LÝ SẢN PHẨM/ĐƠN HÀNG (Giữ nguyên logic cũ) ===
+  
   getFullImageUrl(url: string | undefined): string {
     const defaultPlaceholder = 'assets/images/default-product.png';
     if (!url || url.trim() === '') return ''; 
@@ -152,45 +205,7 @@ export class Admin implements OnInit, AfterViewChecked {
     }
   }
 
-  loadConversations(): void {
-    this.chatService.getConversations().subscribe({
-      next: (res) => {
-        if (res.success) {
-          const oldConversations = this.conversations;
-          this.conversations = res.users.map(u => {
-            const old = oldConversations.find(oldU => oldU.id === u.id);
-            return { ...u, unreadCount: old ? old.unreadCount : 0 };
-          });
-        }
-      },
-      error: (err) => console.error('Lỗi tải hội thoại:', err)
-    });
-  }
-
-  selectUserToChat(user: User): void {
-    this.selectedChatUser = user;
-    user.unreadCount = 0; // Đã xem
-    this.chatService.loadChatWithUser(user.id);
-  }
-
-  sendAdminMessage(): void {
-    if (!this.adminMessage.trim() || !this.selectedChatUser) return;
-    
-    this.chatService.sendMessage(this.adminMessage, this.selectedChatUser.id);
-    
-    this.adminMessage = '';
-    this.shouldScroll = true;
-  }
-
-  ngAfterViewChecked() {
-    if (this.shouldScroll && this.chatContainer) {
-      this.chatContainer.nativeElement.scrollTop = this.chatContainer.nativeElement.scrollHeight;
-      this.shouldScroll = false;
-    }
-  }
-
-  // ... (Giữ nguyên các hàm quản lý sản phẩm và đơn hàng: addProduct, editProduct, saveProduct, deleteProduct, cancelEdit, onFileSelected, addImageField, removeImageField, updateOrderStatus, viewOrder, deleteOrder, getStatusText, getStatusColor, logout)
-  
+  // CRUD Sản phẩm
   addProduct(): void {
     this.editingProduct = null;
     this.productForm = { name: '', price: 0, originalPrice: 0, category: 'headphone', brand: 'Atheng Audio', description: '', videoUrl: null, image: '', images: [''], stock: 100, isActive: true, isFeatured: false, rating: 0, reviewCount: 0 };
@@ -249,7 +264,8 @@ export class Admin implements OnInit, AfterViewChecked {
 
   addImageField(): void { if (!this.productForm.images) { this.productForm.images = []; } this.productForm.images.push(''); }
   removeImageField(index: number): void { if (this.productForm.images) { this.productForm.images.splice(index, 1); } }
-  
+
+  // CRUD Order
   updateOrderStatus(orderId: string | undefined, event: Event): void {
     if (!orderId) return;
     const target = event.target as HTMLSelectElement;

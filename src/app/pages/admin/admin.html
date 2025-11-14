@@ -19,7 +19,7 @@
         <div class="stat-icon">📦</div>
         <div class="stat-info">
           <div class="stat-number">{{ stats.totalProducts | number }}</div>
-          <div class="stat-label">Tổng Sản Phẩm</div>
+          <div class="stat-label">Sản Phẩm</div>
         </div>
       </div>
       <div class="stat-card">
@@ -37,35 +37,23 @@
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">⚠️</div>
+        <div class="stat-icon">💬</div>
         <div class="stat-info">
-          <div class="stat-number">{{ stats.outOfStock | number }}</div>
-          <div class="stat-label">Hết Hàng</div>
+          <div class="stat-number">{{ conversations.length }}</div>
+          <div class="stat-label">Hội Thoại</div>
         </div>
       </div>
     </div>
 
     <div class="admin-tabs">
       <div class="tab-headers">
-        <button 
-          class="tab-header" 
-          [class.active]="activeTab === 'products'"
-          (click)="setActiveTab('products')"
-        >
-          📦 Quản Lý Sản Phẩm
+        <button class="tab-header" [class.active]="activeTab === 'products'" (click)="setActiveTab('products')">
+          📦 Sản Phẩm
         </button>
-        <button 
-          class="tab-header" 
-          [class.active]="activeTab === 'orders'"
-          (click)="setActiveTab('orders')"
-        >
-          🛒 Quản Lý Đơn Hàng
+        <button class="tab-header" [class.active]="activeTab === 'orders'" (click)="setActiveTab('orders')">
+          🛒 Đơn Hàng
         </button>
-        <button 
-          class="tab-header" 
-          [class.active]="activeTab === 'chat'" 
-          (click)="setActiveTab('chat')"
-        >
+        <button class="tab-header" [class.active]="activeTab === 'chat'" (click)="setActiveTab('chat')">
           💬 Hỗ Trợ Khách Hàng
         </button>
       </div>
@@ -73,135 +61,67 @@
       <div class="tab-content">
         @if (activeTab === 'products') {
           <div class="tab-pane">
-            <div class="products-table">
-              <div class="table-header">
-                <h3>Danh Sách Sản Phẩm ({{ products.length }})</h3>
-              </div>
-              
-              <div class="table-content">
-                <div class="table-row header-row">
-                  <div class="col col-image">Hình Ảnh</div>
-                  <div class="col col-name">Tên Sản Phẩm</div>
-                  <div class="col col-price">Giá</div>
-                  <div class="col col-category">Danh Mục</div>
-                  <div class="col col-stock">Tình Trạng</div>
-                  <div class="col col-actions">Thao Tác</div>
+             <div class="products-table">
+                <div class="table-header"><h3>Danh Sách Sản Phẩm</h3></div>
+                <div class="table-content">
+                    <div class="table-row header-row">
+                        <div class="col col-image">Ảnh</div>
+                        <div class="col col-name">Tên</div>
+                        <div class="col col-price">Giá</div>
+                        <div class="col col-stock">Kho</div>
+                        <div class="col col-actions">Thao tác</div>
+                    </div>
+                    @for (product of products; track product.id) {
+                        <div class="table-row">
+                            <div class="col col-image"><img [src]="product.image" class="product-thumb"></div>
+                            <div class="col col-name">{{ product.name }}</div>
+                            <div class="col col-price">{{ product.price | number }}₫</div>
+                            <div class="col col-stock">{{ product.stock }}</div>
+                            <div class="col col-actions">
+                                <button class="btn-edit" (click)="editProduct(product)">Sửa</button>
+                                <button class="btn-delete" (click)="deleteProduct(product.id)">Xóa</button>
+                            </div>
+                        </div>
+                    }
                 </div>
-
-                @for (product of products; track product.id) {
-                  <div class="table-row">
-                    <div class="col col-image">
-                      <img [src]="product.image || 'assets/images/default-product.png'" [alt]="product.name" class="product-thumb">
-                    </div>
-                    <div class="col col-name">
-                      <div class="product-name">{{ product.name }}</div>
-                      <div class="product-brand">{{ product.brand }}</div>
-                    </div>
-                    <div class="col col-price">
-                      <div class="current-price">{{ product.price | number }}₫</div>
-                      @if (product.originalPrice) {
-                        <div class="original-price">{{ product.originalPrice | number }}₫</div>
-                      }
-                    </div>
-                    <div class="col col-category">
-                      <span class="category-badge">{{ product.category }}</span>
-                    </div>
-                    <div class="col col-stock">
-                      @if (product.stock > 0) {
-                        <span class="status-badge in-stock">Còn Hàng ({{product.stock}})</span>
-                      } @else {
-                        <span class="status-badge out-of-stock">Hết Hàng</span>
-                      }
-                    </div>
-                    <div class="col col-actions">
-                      <button class="btn-edit" (click)="editProduct(product)">
-                        ✏️ Sửa
-                      </button>
-                      <button class="btn-delete" (click)="deleteProduct(product.id)">
-                        🗑️ Xóa
-                      </button>
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
+             </div>
           </div>
         }
 
         @if (activeTab === 'orders') {
           <div class="tab-pane">
-            <div class="orders-table">
-              <div class="table-header">
-                <h3>Danh Sách Đơn Hàng ({{ orders.length }})</h3>
-              </div>
-              
-              <div class="table-content">
-                <div class="table-row header-row">
-                  <div class="col col-id">Mã ĐH</div>
-                  <div class="col col-customer">Khách Hàng</div>
-                  <div class="col col-items">Sản Phẩm</div>
-                  <div class="col col-total">Tổng Tiền</div>
-                  <div class="col col-status">Trạng Thái</div>
-                  <div class="col col-date">Ngày Đặt</div>
-                  <div class="col col-actions">Thao Tác</div>
+             <div class="orders-table">
+                <div class="table-header"><h3>Danh Sách Đơn Hàng</h3></div>
+                <div class="table-content">
+                    <div class="table-row header-row">
+                        <div class="col">Mã</div>
+                        <div class="col">Khách</div>
+                        <div class="col">Tổng</div>
+                        <div class="col">Trạng thái</div>
+                        <div class="col">Thao tác</div>
+                    </div>
+                    @for (order of orders; track order.id) {
+                        <div class="table-row">
+                            <div class="col">#{{ order.id?.slice(-6) }}</div>
+                            
+                            <div class="col">{{ order.shippingAddress.fullName }}</div>
+                            <div class="col">{{ order.totalAmount | number }}₫</div>
+                            <div class="col">
+                                <select [value]="order.status" (change)="updateOrderStatus(order.id, $event)" [style.background]="getStatusColor(order.status)" class="status-select">
+                                    <option value="PENDING">Chờ xử lý</option>
+                                    <option value="CONFIRMED">Đã xác nhận</option>
+                                    <option value="SHIPPED">Đang giao</option>
+                                    <option value="DELIVERED">Đã giao</option>
+                                    <option value="CANCELLED">Hủy</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <button class="btn-view" (click)="viewOrder(order.id)">Xem</button>
+                            </div>
+                        </div>
+                    }
                 </div>
-
-                @for (order of orders; track order.id) {
-                  <div class="table-row">
-                    <div class="col col-id">
-                      #{{ order.id }}
-                    </div>
-                    <div class="col col-customer">
-                      <div class="customer-name">{{ order.shippingAddress.fullName }}</div>
-                      <div class="customer-phone">{{ order.shippingAddress.phone }}</div>
-                    </div>
-                    <div class="col col-items">
-                      <div class="items-count">{{ order.items.length }} sản phẩm</div>
-                      <div class="items-preview">
-                        @for (item of order.items.slice(0, 2); track item.productId) {
-                          <span class="item-name">{{ item.productName }}</span>
-                        }
-                        @if (order.items.length > 2) {
-                          <span class="more-items">+{{ order.items.length - 2 }} sản phẩm khác</span>
-                        }
-                      </div>
-                    </div>
-                    <div class="col col-total">
-                      {{ order.totalAmount | number }}₫
-                    </div>
-                    <div class="col col-status">
-                      <select 
-                            [value]="order.status" 
-                            (change)="updateOrderStatus(order.id, $event)"
-                            class="status-select"
-                            [style.background]="getStatusColor(order.status)"
-                        >
-                        <option value="PENDING">Chờ xử lý</option>
-                        <option value="CONFIRMED">Đã xác nhận</option>
-                        <option value="PROCESSING">Đang xử lý</option>
-                        <option value="SHIPPED">Đã giao hàng</option>
-                        <option value="DELIVERED">Đã nhận</option>
-                        <option value="CANCELLED">Đã hủy</option>
-                      </select>
-                    </div>
-                    <div class="col col-date">
-                      {{ order.createdAt | date:'dd/MM/yyyy' }}
-                    </div>
-                    <div class="col col-actions">
-                      <button class="btn-view" (click)="viewOrder(order.id)">
-                        👁️ Xem
-                      </button>
-                    </div>
-                  </div>
-                } @if (orders.length === 0) {
-                  <div class="empty-state">
-                    <div class="empty-icon">🛒</div>
-                    <h3>Chưa có đơn hàng nào</h3>
-                    <p>Các đơn hàng sẽ xuất hiện ở đây khi khách hàng đặt hàng</p>
-                  </div>
-                }
-              </div>
-            </div>
+             </div>
           </div>
         }
 
@@ -220,7 +140,9 @@
                          (click)="selectUserToChat(user)">
                       
                       <div class="user-avatar-container">
-                        <div class="user-avatar">{{ user.name.charAt(0).toUpperCase() }}</div>
+                        <div class="user-avatar">
+                          {{ user.name ? user.name.charAt(0).toUpperCase() : 'U' }}
+                        </div>
                         @if (user.unreadCount && user.unreadCount > 0) {
                           <span class="unread-badge">{{ user.unreadCount }}</span>
                         }
@@ -243,21 +165,26 @@
               <div class="chat-main">
                 @if (selectedChatUser) {
                   <div class="chat-header">
-                    <div class="user-avatar">{{ selectedChatUser.name.charAt(0).toUpperCase() }}</div>
+                    <div class="user-avatar-small">
+                      {{ selectedChatUser.name ? selectedChatUser.name.charAt(0).toUpperCase() : 'U' }}
+                    </div>
                     <div class="header-info">
-                      <h4>Chat với {{ selectedChatUser.name }}</h4>
+                      <h4>{{ selectedChatUser.name }}</h4>
                       <span>{{ selectedChatUser.email }}</span>
                     </div>
                   </div>
 
                   <div class="chat-messages" #chatContainer>
                     @for (msg of chatMessages; track msg.id) {
-                      <div class="message" [class.sent]="msg.from === authService.currentUserValue?.id" [class.received]="msg.from !== authService.currentUserValue?.id">
+                      <div class="message" 
+                           [class.sent]="msg.from === authService.currentUserValue?.id" 
+                           [class.received]="msg.from !== authService.currentUserValue?.id">
+                        
                         <div class="msg-bubble">
                           {{ msg.content }}
                         </div>
                         <div class="msg-time">
-                          {{ msg.timestamp | date:'HH:mm' }}
+                          {{ msg.timestamp | date:'HH:mm dd/MM' }}
                         </div>
                       </div>
                     }
@@ -269,7 +196,9 @@
                            (keyup.enter)="sendAdminMessage()"
                            placeholder="Nhập tin nhắn trả lời..." 
                            class="chat-input">
-                    <button class="btn-send" (click)="sendAdminMessage()">➤</button>
+                    <button class="btn-send" (click)="sendAdminMessage()">
+                      ➤
+                    </button>
                   </div>
                 } @else {
                   <div class="empty-chat-state">
@@ -286,115 +215,89 @@
     </div>
 
     @if (showProductForm) {
-      <div class="modal-overlay" [class.uploading]="isUploading">
-        @if (isUploading) {
-          <div class="upload-spinner">
-            <div class="spinner-icon"></div>
-            <span>Đang tải file lên...</span>
-          </div>
-        }
-        <div class="modal-content">
-          <div class="modal-header">
-            <h2>{{ editingProduct ? 'Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới' }}</h2>
-            <button class="modal-close" (click)="showProductForm = false">×</button>
-          </div>
-
-          <div class="modal-body">
-            <form (ngSubmit)="saveProduct()" class="product-form">
-              <div class="form-grid">
-                
-                <div class="form-group">
-                  <label class="form-label">Tên Sản Phẩm *</label>
-                  <input type="text" [(ngModel)]="productForm.name" name="name" class="form-input" required>
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>{{ editingProduct ? 'Sửa' : 'Thêm' }} Sản Phẩm</h2>
+                    <button class="modal-close" (click)="cancelEdit()">×</button>
                 </div>
-                <div class="form-group">
-                  <label class="form-label">Giá Hiện Tại *</label>
-                  <input type="number" [(ngModel)]="productForm.price" name="price" class="form-input" required>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Giá Gốc</label>
-                  <input type="number" [(ngModel)]="productForm.originalPrice" name="originalPrice" class="form-input">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Danh Mục</label>
-                  <select [(ngModel)]="productForm.category" name="category" class="form-input">
-                    <option value="headphone">Tai Nghe</option>
-                    <option value="speaker">Loa</option>
-                    <option value="accessory">Phụ kiện</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Thương Hiệu</label>
-                  <input type="text" [(ngModel)]="productForm.brand" name="brand" class="form-input">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Tồn kho</label>
-                  <input type="number" [(ngModel)]="productForm.stock" name="stock" class="form-input">
-                </div>
-
-                <div class="form-group full-width">
-                  <label class="form-label">Mô Tả</label>
-                  <textarea [(ngModel)]="productForm.description" name="description" class="form-input" rows="3"></textarea>
-                </div>
-
-                <div class="form-group full-width">
-                  <label class="form-label">Video Sản Phẩm (Ưu tiên)</label>
-                  <input type="file" (change)="onFileSelected($event, 'video')" class="form-input file-input" [disabled]="isUploading" accept="video/mp4,video/webm">
-                  @if (productForm.videoUrl) {
-                    <div class="image-preview">
-                      <input type="text" [value]="productForm.videoUrl" readonly class="form-input url-preview" (click)="$event.target.select()">
-                      <video [src]="productForm.videoUrl" controls width="200"></video>
-                    </div>
-                  }
-                </div>
-
-                <div class="form-group full-width">
-                  <label class="form-label">Ảnh Sản Phẩm</label>
-                  <div class="features-list">
-                    @for (image of productForm.images; track $index) {
-                      <div class="feature-input-group">
-                        <input type="file" (change)="onFileSelected($event, 'images', $index)" class="form-input file-input" [disabled]="isUploading" accept="image/*">
+                <div class="modal-body">
+                    <form (ngSubmit)="saveProduct()" class="product-form">
                         
-                        @if (productForm.images?.[$index]) {
-                           <div class="image-preview-small">
-                             <input type="text" [value]="productForm.images?.[$index]" readonly class="form-input url-preview small" (click)="$event.target.select()">
-                             <img [src]="productForm.images?.[$index]" alt="Preview">
-                           </div>
-                        }
-                        
-                        <button type="button" class="remove-feature-btn" (click)="removeImageField($index)" [disabled]="isUploading">×</button>
-                      </div>
-                    }
-                    <button type="button" class="add-feature-btn" (click)="addImageField()" [disabled]="isUploading">+ Thêm Ảnh Sản Phẩm</button>
-                  </div>
-                </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Tên Sản Phẩm</label>
+                                <input type="text" [(ngModel)]="productForm.name" name="name" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Giá (VNĐ)</label>
+                                <input type="number" [(ngModel)]="productForm.price" name="price" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Giá Gốc (VNĐ)</label>
+                                <input type="number" [(ngModel)]="productForm.originalPrice" name="originalPrice" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Danh Mục</label>
+                                <select [(ngModel)]="productForm.category" name="category" class="form-input">
+                                    <option value="headphone">Tai Nghe</option>
+                                    <option value="speaker">Loa</option>
+                                    <option value="accessory">Phụ kiện</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Thương Hiệu</label>
+                                <input type="text" [(ngModel)]="productForm.brand" name="brand" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Tồn kho</label>
+                                <input type="number" [(ngModel)]="productForm.stock" name="stock" class="form-input">
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label class="form-label">Mô tả</label>
+                                <textarea [(ngModel)]="productForm.description" name="description" class="form-input" rows="3"></textarea>
+                            </div>
 
-                <div class="form-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" [(ngModel)]="productForm.isActive" name="isActive">
-                    <span class="checkmark"></span>
-                    Hiển thị (Active)
-                  </label>
+                            <div class="form-group full-width">
+                                <label class="form-label">Video Sản Phẩm</label>
+                                <input type="file" (change)="onFileSelected($event, 'video')" class="form-input" [disabled]="isUploading" accept="video/mp4,video/webm">
+                                @if (productForm.videoUrl) {
+                                    <div class="image-preview">
+                                        <video [src]="productForm.videoUrl" controls width="200"></video>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label class="form-label">Ảnh Sản Phẩm</label>
+                                <div class="features-list">
+                                    @for (image of productForm.images; track $index) {
+                                        <div class="feature-input-group">
+                                            <input type="file" (change)="onFileSelected($event, 'images', $index)" class="form-input" [disabled]="isUploading" accept="image/*">
+                                            @if (productForm.images?.[$index]) {
+                                                <div class="image-preview-small">
+                                                    <img [src]="productForm.images?.[$index]" alt="Preview">
+                                                </div>
+                                            }
+                                            <button type="button" class="remove-feature-btn" (click)="removeImageField($index)">×</button>
+                                        </div>
+                                    }
+                                    <button type="button" class="add-feature-btn" (click)="addImageField()">+ Thêm ảnh</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" (click)="cancelEdit()">Hủy</button>
+                            <button type="submit" class="btn btn-primary" [disabled]="isUploading">
+                                {{ isUploading ? 'Đang tải...' : 'Lưu' }}
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div class="form-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" [(ngModel)]="productForm.isFeatured" name="isFeatured">
-                    <span class="checkmark"></span>
-                    Nổi bật (Featured)
-                  </label>
-                </div>
-              
-              </div> 
-              <div class="form-actions">
-                <button type="button" class="btn btn-secondary" (click)="cancelEdit()">Hủy</button>
-                <button type="submit" class="btn btn-primary" [disabled]="isUploading">
-                  {{ isUploading ? 'Đang tải file...' : (editingProduct ? 'Cập Nhật' : 'Thêm Sản Phẩm') }}
-                </button>
-              </div>
-            </form>
-          </div>
+            </div>
         </div>
-      </div>
     }
   </div>
 </div>

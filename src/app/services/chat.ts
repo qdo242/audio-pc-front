@@ -7,7 +7,7 @@ import { AuthService } from './auth';
 import { environment } from '../interfaces/enviroment';
 
 export interface ChatMessage {
-  id: string;
+  id?: string;
   from: string;
   to: string;
   fromName: string;
@@ -21,8 +21,13 @@ export interface ChatMessage {
 export class ChatService {
   private stompClient: Client | undefined;
   
-  private messageSubject = new BehaviorSubject<ChatMessage[]>([]);
-  public messages$ = this.messageSubject.asObservable();
+  // 1. Kho tin nhắn Admin (User <-> Admin)
+  private adminMessageSubject = new BehaviorSubject<ChatMessage[]>([]);
+  public adminMessages$ = this.adminMessageSubject.asObservable();
+
+  // 2. Kho tin nhắn Bot (User <-> Bot)
+  private botMessageSubject = new BehaviorSubject<ChatMessage[]>([]);
+  public botMessages$ = this.botMessageSubject.asObservable();
 
   private incomingMessageSubject = new Subject<ChatMessage>();
   public onMessage$ = this.incomingMessageSubject.asObservable();
@@ -31,8 +36,8 @@ export class ChatService {
   private apiUrl = environment.apiUrl;
   private currentUserId: string | undefined;
 
-  // --- THÊM MỚI: Biến theo dõi người đang chat cùng (cho Admin) ---
-  private activeChatUserId: string | null = null;
+  // Biến dùng cho Admin Page
+  private currentAdminChatUser: string | null = null;
 
   constructor(
     private authService: AuthService,
@@ -58,98 +63,109 @@ export class ChatService {
         connectHeaders: { 'Authorization': `Bearer ${token}` },
         reconnectDelay: 5000,
         onConnect: () => {
-            // Subscribe kênh riêng của user: /topic/user/{userID}
             this.stompClient?.subscribe(`/topic/user/${this.currentUserId}`, (message: IMessage) => {
                 const body = JSON.parse(message.body);
-                
                 if (Array.isArray(body)) {
-                    // Nhận lịch sử chat (Mảng tin nhắn)
-                    this.messageSubject.next(body);
+                    this.handleHistoryResponse(body);
                 } else {
-                    // Nhận tin nhắn mới (1 Object tin nhắn)
-                    const chatMessage: ChatMessage = body;
-                    this.handleIncomingMessage(chatMessage);
+                    this.handleIncomingMessage(body);
                 }
             });
             
-            // Nếu là User thường, tự động tải lịch sử chat (với Admin)
+            // MẶC ĐỊNH: Tải lịch sử cả 2 luồng (để F5 không mất)
             if (!this.authService.isAdminSync()) {
-                this.requestHistory();
+                this.requestHistory('ADMIN');
+                this.requestHistory('BOT');
             }
         }
     });
     this.stompClient.activate();
   }
 
-  private handleIncomingMessage(chatMessage: ChatMessage) {
-    // 1. Luôn bắn event này để Admin component cập nhật Sidebar (số tin chưa đọc)
-    // Bất kể đang chat với ai, sidebar cần biết có tin nhắn mới để hiện chấm đỏ
-    this.incomingMessageSubject.next(chatMessage);
-
-    // 2. --- THÊM MỚI: Logic lọc tin nhắn cho Admin ---
-    if (this.authService.isAdminSync()) {
-        // Kiểm tra xem tin nhắn này có thuộc cuộc hội thoại đang mở hay không
-        // (Là tin nhắn TỪ người đang chat HOẶC tin nhắn GỬI CHO người đang chat)
-        const isMessageForCurrentChat = 
-            this.activeChatUserId && 
-            (chatMessage.from === this.activeChatUserId || chatMessage.to === this.activeChatUserId);
-
-        // Nếu không phải cuộc hội thoại này, thì DỪNG LẠI
-        // Không đẩy vào danh sách hiển thị (messageSubject)
-        if (!isMessageForCurrentChat) {
-            return;
+  private handleHistoryResponse(messages: ChatMessage[]) {
+    if (!messages || messages.length === 0) return;
+    const sample = messages[0];
+    
+    if (sample.from === 'BOT' || sample.to === 'BOT') {
+        this.botMessageSubject.next(messages);
+    } else {
+        // Nếu là Admin đang xem lịch sử của user
+        if (this.authService.isAdminSync()) {
+             if (this.currentAdminChatUser && 
+                (sample.from === this.currentAdminChatUser || sample.to === this.currentAdminChatUser)) {
+                 this.adminMessageSubject.next(messages);
+             }
+        } else {
+            this.adminMessageSubject.next(messages);
         }
     }
+  }
 
-    // 3. Cập nhật vào khung chat hiện tại (nếu thỏa mãn điều kiện trên)
-    const currentMessages = this.messageSubject.value;
-    
-    // Kiểm tra trùng lặp ID để tránh hiển thị 2 lần
-    if (!currentMessages.some(m => m.id === chatMessage.id)) {
-        this.messageSubject.next([...currentMessages, chatMessage]);
+  private handleIncomingMessage(chatMessage: ChatMessage) {
+    this.incomingMessageSubject.next(chatMessage);
+
+    // 1. Tin nhắn BOT
+    if (chatMessage.from === 'BOT' || chatMessage.to === 'BOT') {
+        const current = this.botMessageSubject.value;
+        if (!this.isDuplicate(current, chatMessage)) {
+            this.botMessageSubject.next([...current, chatMessage]);
+        }
+        return;
     }
+
+    // 2. Tin nhắn ADMIN/USER
+    if (this.authService.isAdminSync()) {
+        // Admin chỉ thêm nếu đang chat với đúng User đó
+        if (this.currentAdminChatUser && 
+           (chatMessage.from === this.currentAdminChatUser || chatMessage.to === this.currentAdminChatUser)) {
+            const current = this.adminMessageSubject.value;
+            if (!this.isDuplicate(current, chatMessage)) {
+                this.adminMessageSubject.next([...current, chatMessage]);
+            }
+        }
+    } else {
+        // User luôn thêm vào kho Admin
+        const current = this.adminMessageSubject.value;
+        if (!this.isDuplicate(current, chatMessage)) {
+            this.adminMessageSubject.next([...current, chatMessage]);
+        }
+    }
+  }
+
+  private isDuplicate(list: ChatMessage[], newMsg: ChatMessage): boolean {
+    return list.some(m => m.id === newMsg.id || (m.timestamp === newMsg.timestamp && m.content === newMsg.content));
   }
 
   public disconnect(): void {
     if (this.stompClient) {
         this.stompClient.deactivate();
     }
-    this.messageSubject.next([]);
-    this.activeChatUserId = null;
+    this.adminMessageSubject.next([]);
+    this.botMessageSubject.next([]);
+    this.currentAdminChatUser = null;
   }
 
   getConversations(): Observable<{success: boolean, users: any[]}> {
     return this.http.get<{success: boolean, users: any[]}>(`${this.apiUrl}/chat/conversations`);
   }
 
-  // Hàm được Admin gọi khi chọn một user từ sidebar
   loadChatWithUser(targetUserId: string): void {
-    // --- THÊM MỚI: Cập nhật ID người đang chat ---
-    this.activeChatUserId = targetUserId;
+    this.currentAdminChatUser = targetUserId;
+    this.adminMessageSubject.next([]); 
+    this.requestHistory(targetUserId); 
+  }
 
-    // Xóa tin nhắn cũ trên UI để chờ tải mới
-    this.messageSubject.next([]);
-    
+  public requestHistory(targetId: string): void {
     if (this.stompClient?.active) {
       this.stompClient.publish({
         destination: '/app/chat.getHistory',
-        body: JSON.stringify({ targetUserId: targetUserId }) 
+        body: JSON.stringify({ targetUserId: targetId }) 
       });
     }
   }
 
-  public requestHistory(): void {
+  public sendMessage(content: string, toUserId: string): void {
     if (this.stompClient?.active && this.currentUserId) {
-      this.stompClient.publish({
-        destination: '/app/chat.getHistory',
-        body: JSON.stringify({}) 
-      });
-    }
-  }
-
-  public sendMessage(content: string, toUserId?: string): void {
-    if (this.stompClient?.active && this.currentUserId) {
-      
       const payload = {
         from: this.currentUserId,
         to: toUserId, 
@@ -157,18 +173,10 @@ export class ChatService {
         fromName: this.authService.userName,
         timestamp: Date.now()
       };
-
-      // Gửi lên server và KHÔNG tự add vào danh sách ngay tại đây
-      // (Chờ server gửi lại qua /topic để đảm bảo đồng bộ và có ID)
       this.stompClient.publish({
         destination: '/app/chat.sendMessage',
         body: JSON.stringify(payload)
       });
     }
   }
-
-  sendMessageToBot(message: string): Observable<{response: string}> {
-    return this.http.post<{response: string}>(`${this.apiUrl}/bot/chat`, { message });
-  }
-
 }
