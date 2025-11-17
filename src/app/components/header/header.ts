@@ -5,11 +5,12 @@ import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../services/auth';
 import { CartService } from '../../services/cart';
+import { NotificationBell } from '../notification-bell/notification-bell';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, NotificationBell],
   templateUrl: './header.html',
   styleUrls: ['./header.scss']
 })

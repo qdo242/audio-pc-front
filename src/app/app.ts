@@ -12,4 +12,8 @@ import { ChatWidget } from './components/chat-widget/chat-widget';
 })
 export class App {
   protected readonly title = signal('athengaudio-frontend');
+
+  // SỬA: Thêm 2 dòng này
+  isChatOpen = false;
+  onChatToggled(isOpen: boolean) { this.isChatOpen = isOpen; }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, AfterViewChecked, HostListener, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, AfterViewChecked, HostListener, ViewChild, Output, EventEmitter } from '@angular/core'; // SỬA: Thêm Output, EventEmitter
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable, Subscription, BehaviorSubject, combineLatest } from 'rxjs';
@@ -18,6 +18,8 @@ export class ChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   isOpen = false;
   newMessage = '';
   
+  @Output() openStateChanged = new EventEmitter<boolean>(); // SỬA: Thêm dòng này
+
   private chatModeSubject = new BehaviorSubject<'BOT' | 'ADMIN'>('BOT');
   displayMessages$: Observable<ChatMessage[]>;
   
@@ -49,10 +51,14 @@ export class ChatWidget implements OnInit, OnDestroy, AfterViewChecked {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
-    if (this.isOpen && !this.elementRef.nativeElement.contains(event.target)) {
-      this.isOpen = false;
+    // Sửa: Chỉ đóng nếu click ra ngoài VÀ đang mở
+    const clickedInside = this.elementRef.nativeElement.contains(event.target);
+    if (this.isOpen && !clickedInside) {
+      // Nếu click ra ngoài, gọi toggleChat để đóng
+      this.toggleChat(); 
     }
   }
+
 
   ngOnInit(): void {
     const savedMode = localStorage.getItem('chat_widget_mode');
@@ -68,7 +74,9 @@ export class ChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       this.router.events.pipe(
         filter(event => event instanceof NavigationStart)
       ).subscribe(() => {
-        this.isOpen = false; 
+        if (this.isOpen) {
+          this.toggleChat(); // Đóng chat khi chuyển trang
+        }
       })
     );
 
@@ -117,9 +125,11 @@ export class ChatWidget implements OnInit, OnDestroy, AfterViewChecked {
 
   toggleChat(): void {
     this.isOpen = !this.isOpen;
+    this.openStateChanged.emit(this.isOpen); // SỬA: Gửi tín hiệu ra ngoài
+    
     if (this.isOpen) {
       this.shouldScrollToBottom = true;
-      this.switchMode(this.chatMode);
+      this.chatService.requestHistory(this.chatMode); 
       setTimeout(() => this.scrollToBottom(), 100);
     }
   }
@@ -128,6 +138,7 @@ export class ChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.chatModeSubject.next(mode);
     localStorage.setItem('chat_widget_mode', mode);
     this.shouldScrollToBottom = true;
+    this.chatService.requestHistory(mode);
   }
 
   get chatMode(): 'BOT' | 'ADMIN' {

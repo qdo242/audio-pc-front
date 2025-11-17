@@ -3,4 +3,27 @@
   <router-outlet></router-outlet>
 </main>
 <app-footer></app-footer>
-<app-chat-widget></app-chat-widget>
+
+<div class="floating-action-buttons" [class.chat-open]="isChatOpen">
+  
+  <a 
+    href="https://zalo.me/0919764542" 
+    target="_blank" 
+    class="fab-icon zalo-fab" 
+    title="Chat qua Zalo"
+    (click)="$event.stopPropagation()">
+    <img src="/images/icon-zalo.png" alt="Zalo" class="custom-icon">
+  </a>
+  
+  <a 
+    href="https://www.facebook.com/hieu.minh.nguyen.912900" 
+    target="_blank" 
+    class="fab-icon messenger-fab" 
+    title="Chat qua Messenger"
+    (click)="$event.stopPropagation()">
+    <img src="/images/icon-messenger.png" alt="Messenger" class="custom-icon">
+  </a>
+
+  <app-chat-widget (openStateChanged)="onChatToggled($event)"></app-chat-widget>
+
+</div>

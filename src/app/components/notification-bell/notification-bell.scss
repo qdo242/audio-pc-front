@@ -1,0 +1,120 @@
+@use '../../../styles.scss' as *;
+
+.notification-bell {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.icon-btn {
+  font-size: 1.2rem;
+  text-decoration: none;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.3s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background: #f8f9fa;
+  }
+
+  .badge {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    min-width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    padding: 2px;
+  }
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 10px;
+  width: 350px;
+  max-height: 400px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  border: 1px solid var(--border-color);
+  z-index: 10001;
+  display: flex;
+  flex-direction: column;
+
+  .dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    
+    h3 { margin: 0; font-size: 1.1rem; }
+    .mark-read-btn {
+      background: none; border: none;
+      color: var(--primary-color);
+      font-size: 0.8rem; font-weight: 600;
+      cursor: pointer;
+    }
+  }
+
+  .dropdown-body {
+    overflow-y: auto;
+    max-height: 320px;
+  }
+
+  .notif-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background 0.2s ease;
+
+    &:hover { background: var(--bg-light); }
+    &:last-child { border-bottom: none; }
+
+    &.unread {
+      background: #eff6ff;
+    }
+
+    .notif-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .notif-content {
+      flex: 1;
+      .notif-message {
+        margin: 0 0 0.25rem 0;
+        color: var(--text-dark);
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+      .notif-time {
+        font-size: 0.75rem;
+        color: var(--text-lighter);
+      }
+    }
+  }
+  
+  .notif-empty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-light);
+  }
+}

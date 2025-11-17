@@ -19,6 +19,7 @@
       </nav>
 
       <div class="user-actions">
+        <app-notification-bell *ngIf="authService.isLoggedIn"></app-notification-bell>
         <a *ngIf="authService.isLoggedIn" routerLink="/wishlist" class="icon-btn" title="Yêu thích">
           ❤️
           <span class="badge" *ngIf="authService.currentUserValue?.wishlist?.length">

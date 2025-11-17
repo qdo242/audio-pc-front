@@ -1,0 +1,45 @@
+<div class="notification-bell" (click)="toggleDropdown($event)">
+  <button class="icon-btn" title="Thông báo">
+    🔔
+    @if (unreadCount$ | async; as count) {
+      @if (count > 0) {
+        <span class="badge">{{ count }}</span>
+      }
+    }
+  </button>
+
+  @if (isDropdownOpen) {
+    <div class="notification-dropdown" (click)="$event.stopPropagation()">
+      <div class="dropdown-header">
+        <h3>Thông báo</h3>
+        <button class="mark-read-btn" (click)="markAllAsRead()">Đánh dấu đã đọc</button>
+      </div>
+      <div class="dropdown-body">
+        @if (notifications$ | async; as notifications) {
+          @if (notifications.length > 0) {
+            @for (notif of notifications; track notif.id) {
+              <div 
+                class="notif-item" 
+                [class.unread]="!notif.read" 
+                (click)="onNotificationClick(notif)">
+                <div class="notif-icon">
+                  @if (notif.link.includes('admin')) { 💬 }
+                  @else if (notif.link.includes('order')) { 📦 }
+                  @else { ℹ️ }
+                </div>
+                <div class="notif-content">
+                  <p class="notif-message">{{ notif.message }}</p>
+                  <span class="notif-time">{{ notif.timestamp | date:'HH:mm dd/MM/yy' }}</span>
+                </div>
+              </div>
+            }
+          } @else {
+            <div class="notif-empty">
+              <p>Bạn không có thông báo nào.</p>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>

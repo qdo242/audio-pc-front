@@ -1,26 +1,58 @@
 @use '../../../styles.scss' as *;
 
 :host {
-  position: fixed; bottom: 20px; right: 20px; z-index: 99999;
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; pointer-events: none; 
+  /* SỬA: Bỏ position fixed, vì nó đã nằm trong .bottom-fixed-bar */
+  /* Thay vào đó, đặt nó là một flex item và cho phép nó nổi cửa sổ chat */
+  position: relative; 
+  width: 50px; /* Chiều rộng nút */
+  height: 50px; /* Chiều cao nút */
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+  pointer-events: none; /* Mặc định không cho click qua host */
+  z-index: 10; /* Đảm bảo nút chat nổi trên các nút khác trong cùng thanh */
 }
 
 .chat-widget-container {
-  pointer-events: auto; position: relative; display: flex; flex-direction: column; align-items: flex-end;
+  /* SỬA: Không cần container này nữa, vì host đã là flex item rồi */
+  /* Chúng ta sẽ đặt nút chat và cửa sổ trực tiếp vào host */
+  pointer-events: none; 
+  position: relative; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: flex-end;
 }
 
 /* --- WINDOW --- */
 .chat-window {
   width: 380px; height: 600px; max-height: 75vh; background: #ffffff;
   border-radius: 20px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  display: flex; flex-direction: column; overflow: hidden; margin-bottom: 20px;
+  display: flex; flex-direction: column; overflow: hidden; 
+  
+  /* SỬA: Vị trí của cửa sổ chat so với nút chat */
+  position: absolute; 
+  bottom: calc(100% + 15px); /* Nổi lên trên nút chat, cộng thêm padding của bottom-fixed-bar */
+  right: 0; 
+  
   transform-origin: bottom right; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid rgba(0,0,0,0.05);
+  z-index: 10000; 
   
   opacity: 0; visibility: hidden; transform: scale(0.9) translateY(20px);
-  &.open { opacity: 1; visibility: visible; transform: scale(1) translateY(0); }
+  pointer-events: none; 
 
-  @media (max-width: 480px) { width: 90vw; right: 0; bottom: 85px; }
+  &.open { 
+    opacity: 1; 
+    visibility: visible; 
+    transform: scale(1) translateY(0); 
+    pointer-events: auto; 
+  }
+
+  @media (max-width: 480px) { 
+    width: 90vw; 
+    right: 0; 
+    /* SỬA: Adjust bottom for small screens */
+    bottom: calc(100% + 15px); 
+    /* bottom: 85px; // Điều chỉnh nếu bạn muốn nó luôn nằm trên thanh */
+  }
 }
 
 /* --- HEADER --- */
@@ -79,7 +111,7 @@
     flex-direction: row-reverse;
     .msg-content { background: var(--primary-gradient); color: white; border-bottom-right-radius: 4px; transform-origin: bottom right; ::ng-deep a { color: white; text-decoration: underline; } }
   }
-  &.received .msg-content { background: white; color: #333; border-bottom-left-radius: 4px; border: 1px solid #e5e7eb; }
+  &.received .msg-content { background: white; color: #333; border-bottom-left-radius: 44px; border: 1px solid #e5e7eb; }
 }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -112,13 +144,28 @@
   }
 }
 
-/* --- TOGGLE BUTTON --- */
+/* --- TOGGLE BUTTON (NÚT CHAT TÍM VÀ NÚT X TÍM) --- */
 .chat-toggle-btn {
   width: 50px; height: 50px; border-radius: 50%; background: var(--primary-gradient); color: white; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
   display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; z-index: 10000;
+  pointer-events: auto; 
+
   &:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
-  &.active { transform: rotate(90deg); &:hover { transform: rotate(90deg) scale(1.1); } }
-  .icon-svg { width: 24px; height: 24px; transition: transform 0.3s ease; &.close-icon { width: 20px; height: 20px; } }
+  
+  &.active { 
+    transform: rotate(90deg); 
+    &:hover { transform: rotate(90deg) scale(1.1); } 
+  }
+
+  .icon-svg { 
+    width: 24px; 
+    height: 24px; 
+    transition: transform 0.3s ease; 
+    &.close-icon { 
+      width: 20px; 
+      height: 20px; 
+    } 
+  }
   .pulse-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--primary-color); animation: pulse 2s infinite; opacity: 0; pointer-events: none; }
 }
 @keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.6); opacity: 0; } }

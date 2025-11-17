@@ -1,115 +1,112 @@
-<div class="chat-widget-container">
-  
-  <div class="chat-window" [class.open]="isOpen">
-    <div class="chat-header">
-      <div class="header-left">
-        <div class="bot-avatar-large">
-          <img src="assets/images/bot-avatar.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/4712/4712027.png'" alt="Bot">
-          <span class="status-dot"></span>
-        </div>
-        <div class="header-info">
-          <h3>{{ chatMode === 'BOT' ? 'Atheng AI' : 'Hỗ Trợ Viên' }}</h3>
-          <span class="status-text">Luôn sẵn sàng hỗ trợ bạn</span>
-        </div>
+<div class="chat-window" [class.open]="isOpen">
+  <div class="chat-header">
+    <div class="header-left">
+      <div class="bot-avatar-large">
+        <img src="assets/images/bot-avatar.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/4712/4712027.png'" alt="Bot">
+        <span class="status-dot"></span>
       </div>
-      
-      <div class="header-actions">
-        @if (authService.isLoggedIn && !isUserAdmin) {
-          <button class="mode-btn" (click)="switchMode(chatMode === 'BOT' ? 'ADMIN' : 'BOT')" 
-                  [title]="chatMode === 'BOT' ? 'Gặp nhân viên' : 'Chat với AI'">
-            {{ chatMode === 'BOT' ? '👨‍💻' : '🤖' }}
-          </button>
-        }
-        <button class="close-btn" (click)="toggleChat()">✕</button>
+      <div class="header-info">
+        <h3>{{ chatMode === 'BOT' ? 'Atheng AI' : 'Hỗ Trợ Viên' }}</h3>
+        <span class="status-text">Luôn sẵn sàng hỗ trợ bạn</span>
       </div>
     </div>
     
-    <div class="chat-body" #scrollContainer>
-      @if (authService.isLoggedIn) {
-        <div class="messages-list">
-          <div class="date-divider"><span>Hôm nay</span></div>
-          
-          <div class="message received">
-            <div class="msg-avatar">
-              {{ chatMode === 'BOT' ? '🤖' : '👨‍💻' }}
-            </div>
-            <div class="msg-content">
-              @if (chatMode === 'BOT') {
-                 Chào bạn! 👋 Mình là trợ lý ảo của <b>AthengAudio</b>.<br>
-              Mình có thể giúp bạn tìm tai nghe, loa hoặc kiểm tra đơn hàng. Bạn cần tìm gì nhỉ?
-              } @else {
-                Chào bạn! 👋 Mình là nhân viên hỗ trợ của AthengAudio. Mình có thể giúp gì cho bạn?
-              }
-            </div>
-          </div>
-
-          @for (msg of displayMessages$ | async; track msg.id) {
-            <div class="message" 
-                 [class.sent]="msg.from === authService.currentUserValue?.id" 
-                 [class.received]="msg.from !== authService.currentUserValue?.id">
-              
-              @if (msg.from !== authService.currentUserValue?.id) {
-                <div class="msg-avatar">
-                  {{ msg.fromName === 'Atheng AI' ? '🤖' : '👨‍💻' }}
-                </div>
-              }
-
-              <div class="msg-content" [innerHTML]="msg.content"></div>
-              
-              <div class="msg-meta">
-                {{ msg.timestamp | date:'HH:mm' }}
-              </div>
-            </div>
-          }
-
-          @if (isBotTyping && chatMode === 'BOT') {
-            <div class="message received typing-message">
-              <div class="msg-avatar">🤖</div>
-              <div class="msg-content typing-bubble">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-              </div>
-            </div>
-          }
-        </div>
-      } @else {
-        <div class="chat-login-prompt">
-          <div class="login-icon">🔒</div>
-          <h3>Đăng nhập để chat</h3>
-          <p>Hãy đăng nhập để nhận tư vấn và lưu lịch sử chat nhé!</p>
-          <a routerLink="/login" (click)="isOpen = false" class="btn-login">Đăng Nhập Ngay</a>
-        </div>
-      }
-    </div>
-
-    <div class="chat-footer">
-      <div class="input-wrapper">
-        <input 
-          type="text" 
-          [placeholder]="chatMode === 'BOT' ? 'Nhập tin nhắn cho AI...' : 'Nhắn cho nhân viên...'"
-          [(ngModel)]="newMessage"
-          (keyup.enter)="onSendMessage()"
-          [disabled]="!authService.isLoggedIn"
-        />
-        <button class="send-btn" (click)="onSendMessage()" [disabled]="!newMessage.trim()">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+    <div class="header-actions">
+      @if (authService.isLoggedIn && !isUserAdmin) {
+        <button class="mode-btn" (click)="switchMode(chatMode === 'BOT' ? 'ADMIN' : 'BOT')" 
+                [title]="chatMode === 'BOT' ? 'Gặp nhân viên' : 'Chat với AI'">
+          {{ chatMode === 'BOT' ? '👨‍💻' : '🤖' }}
         </button>
-      </div>
+      }
+      <button class="close-btn" (click)="toggleChat()">✕</button>
     </div>
   </div>
+  
+  <div class="chat-body" #scrollContainer>
+    @if (authService.isLoggedIn) {
+      <div class="messages-list">
+        <div class="date-divider"><span>Hôm nay</span></div>
+        
+        <div class="message received">
+          <div class="msg-avatar">
+            {{ chatMode === 'BOT' ? '🤖' : '👨‍💻' }}
+          </div>
+          <div class="msg-content">
+            @if (chatMode === 'BOT') {
+               Chào bạn! 👋 Mình là trợ lý ảo của <b>AthengAudio</b>.<br>
+            Mình có thể giúp bạn tìm tai nghe, loa hoặc kiểm tra đơn hàng. Bạn cần tìm gì nhỉ?
+            } @else {
+              Chào bạn! 👋 Mình là nhân viên hỗ trợ của AthengAudio. Mình có thể giúp gì cho bạn?
+            }
+          </div>
+        </div>
 
-  <button class="chat-toggle-btn" (click)="toggleChat()" [class.active]="isOpen">
-    @if (isOpen) {
-      <svg class="icon-svg close-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
+        @for (msg of displayMessages$ | async; track msg.id) {
+          <div class="message" 
+               [class.sent]="msg.from === authService.currentUserValue?.id" 
+               [class.received]="msg.from !== authService.currentUserValue?.id">
+            
+            @if (msg.from !== authService.currentUserValue?.id) {
+              <div class="msg-avatar">
+                {{ msg.fromName === 'Atheng AI' ? '🤖' : '👨‍💻' }}
+              </div>
+            }
+
+            <div class="msg-content" [innerHTML]="msg.content"></div>
+            
+            <div class="msg-meta">
+              {{ msg.timestamp | date:'HH:mm' }}
+            </div>
+          </div>
+        }
+
+        @if (isBotTyping && chatMode === 'BOT') {
+          <div class="message received typing-message">
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-content typing-bubble">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+          </div>
+        }
+      </div>
     } @else {
-      <svg class="icon-svg chat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
-      </svg>
-      <span class="pulse-ring"></span>
+      <div class="chat-login-prompt">
+        <div class="login-icon">🔒</div>
+        <h3>Đăng nhập để chat</h3>
+        <p>Hãy đăng nhập để nhận tư vấn và lưu lịch sử chat nhé!</p>
+        <a routerLink="/login" (click)="isOpen = false" class="btn-login">Đăng Nhập Ngay</a>
+      </div>
     }
-  </button>
+  </div>
+
+  <div class="chat-footer">
+    <div class="input-wrapper">
+      <input 
+        type="text" 
+        [placeholder]="chatMode === 'BOT' ? 'Nhập tin nhắn cho AI...' : 'Nhắn cho nhân viên...'"
+        [(ngModel)]="newMessage"
+        (keyup.enter)="onSendMessage()"
+        [disabled]="!authService.isLoggedIn"
+      />
+      <button class="send-btn" (click)="onSendMessage()" [disabled]="!newMessage.trim()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+      </button>
+    </div>
+  </div>
 </div>
+
+<button class="chat-toggle-btn" (click)="toggleChat()" [class.active]="isOpen">
+  @if (isOpen) {
+    <svg class="icon-svg close-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  } @else {
+    <svg class="icon-svg chat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+    </svg>
+    <span class="pulse-ring"></span>
+  }
+</button>
