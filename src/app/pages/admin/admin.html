@@ -1,5 +1,6 @@
 <div class="admin-page">
   <div class="container">
+
     <div class="admin-header">
       <h1 class="page-title">Quản Lý Atheng Audio</h1>
       <div class="admin-actions">
@@ -59,6 +60,7 @@
       </div>
 
       <div class="tab-content">
+
         @if (activeTab === 'products') {
           <div class="tab-pane">
              <div class="products-table">
@@ -73,7 +75,9 @@
                     </div>
                     @for (product of products; track product.id) {
                         <div class="table-row">
-                            <div class="col col-image"><img [src]="product.image" class="product-thumb"></div>
+                            <div class="col col-image">
+                                <img [src]="product.image" class="product-thumb" onerror="this.src='assets/images/default-product.png'">
+                            </div>
                             <div class="col col-name">{{ product.name }}</div>
                             <div class="col col-price">{{ product.price | number }}₫</div>
                             <div class="col col-stock">{{ product.stock }}</div>
@@ -103,7 +107,6 @@
                     @for (order of orders; track order.id) {
                         <div class="table-row">
                             <div class="col">#{{ order.id?.slice(-6) }}</div>
-                            
                             <div class="col">{{ order.shippingAddress.fullName }}</div>
                             <div class="col">{{ order.totalAmount | number }}₫</div>
                             <div class="col">
@@ -128,17 +131,17 @@
         @if (activeTab === 'chat') {
           <div class="tab-pane chat-pane">
             <div class="chat-layout">
-              
+
               <div class="chat-sidebar">
                 <div class="sidebar-header">
                   <h3>Hội thoại</h3>
                 </div>
                 <div class="conversation-list">
                   @for (user of conversations; track user.id) {
-                    <div class="conversation-item" 
+                    <div class="conversation-item"
                          [class.active]="selectedChatUser?.id === user.id"
                          (click)="selectUserToChat(user)">
-                      
+
                       <div class="user-avatar-container">
                         <div class="user-avatar">
                           {{ user.name ? user.name.charAt(0).toUpperCase() : 'U' }}
@@ -147,10 +150,12 @@
                           <span class="unread-badge">{{ user.unreadCount }}</span>
                         }
                       </div>
-                      
+
                       <div class="user-info">
                         <div class="user-name">{{ user.name }}</div>
-                        <div class="user-email">{{ user.email }}</div>
+                        <div class="user-email" [style.color]="user.unreadCount ? '#333' : '#666'" [style.font-weight]="user.unreadCount ? 'bold' : 'normal'">
+                             {{ user.email }}
+                        </div>
                       </div>
                     </div>
                   }
@@ -170,16 +175,23 @@
                     </div>
                     <div class="header-info">
                       <h4>{{ selectedChatUser.name }}</h4>
-                      <span>{{ selectedChatUser.email }}</span>
+                      <span>Khách hàng</span>
                     </div>
                   </div>
 
                   <div class="chat-messages" #chatContainer>
+                    @if (chatMessages.length === 0) {
+                        <div class="no-messages">
+                            <p>Chưa có lịch sử trò chuyện.</p>
+                            <p>Hãy gửi tin nhắn đầu tiên!</p>
+                        </div>
+                    }
+
                     @for (msg of chatMessages; track msg.id) {
-                      <div class="message" 
-                           [class.sent]="msg.from === authService.currentUserValue?.id" 
+                      <div class="message"
+                           [class.sent]="msg.from === authService.currentUserValue?.id"
                            [class.received]="msg.from !== authService.currentUserValue?.id">
-                        
+
                         <div class="msg-bubble">
                           {{ msg.content }}
                         </div>
@@ -191,19 +203,20 @@
                   </div>
 
                   <div class="chat-input-area">
-                    <input type="text" 
-                           [(ngModel)]="adminMessage" 
+                    <input type="text"
+                           [(ngModel)]="adminMessage"
                            (keyup.enter)="sendAdminMessage()"
-                           placeholder="Nhập tin nhắn trả lời..." 
+                           placeholder="Nhập tin nhắn trả lời..."
                            class="chat-input">
                     <button class="btn-send" (click)="sendAdminMessage()">
                       ➤
                     </button>
                   </div>
+
                 } @else {
                   <div class="empty-chat-state">
                     <div class="empty-icon">💬</div>
-                    <h3>Chọn một khách hàng để bắt đầu hỗ trợ</h3>
+                    <h3>Chọn một khách hàng để hỗ trợ</h3>
                   </div>
                 }
               </div>
@@ -223,7 +236,6 @@
                 </div>
                 <div class="modal-body">
                     <form (ngSubmit)="saveProduct()" class="product-form">
-                        
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Tên Sản Phẩm</label>
@@ -253,38 +265,51 @@
                                 <label class="form-label">Tồn kho</label>
                                 <input type="number" [(ngModel)]="productForm.stock" name="stock" class="form-input">
                             </div>
-                            
-                            <div class="form-group full-width">
-                                <label class="form-label">Mô tả</label>
-                                <textarea [(ngModel)]="productForm.description" name="description" class="form-input" rows="3"></textarea>
-                            </div>
 
                             <div class="form-group full-width">
                                 <label class="form-label">Video Sản Phẩm</label>
-                                <input type="file" (change)="onFileSelected($event, 'video')" class="form-input" [disabled]="isUploading" accept="video/mp4,video/webm">
+                                <input type="file" (change)="onVideoSelected($event)" class="form-input" [disabled]="isUploading" accept="video/mp4,video/webm">
                                 @if (productForm.videoUrl) {
-                                    <div class="image-preview">
+                                    <div class="image-preview" style="margin-top: 10px;">
                                         <video [src]="productForm.videoUrl" controls width="200"></video>
                                     </div>
                                 }
                             </div>
 
-                            <div class="form-group full-width">
-                                <label class="form-label">Ảnh Sản Phẩm</label>
-                                <div class="features-list">
-                                    @for (image of productForm.images; track $index) {
-                                        <div class="feature-input-group">
-                                            <input type="file" (change)="onFileSelected($event, 'images', $index)" class="form-input" [disabled]="isUploading" accept="image/*">
-                                            @if (productForm.images?.[$index]) {
-                                                <div class="image-preview-small">
-                                                    <img [src]="productForm.images?.[$index]" alt="Preview">
-                                                </div>
-                                            }
-                                            <button type="button" class="remove-feature-btn" (click)="removeImageField($index)">×</button>
+                             <div class="form-group full-width">
+                                <label class="form-label">Màu Sắc & Ảnh</label>
+                                <div class="variant-groups-container" style="display: flex; flex-direction: column; gap: 20px;">
+                                    @for (group of colorVariantGroups; track $index; let groupIndex = $index) {
+                                        <div class="variant-group" style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; background: #f8fafc;">
+                                            <div class="color-input-wrapper" style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                                                <input type="color" [(ngModel)]="group.colorName" name="colorPicker_{{groupIndex}}" style="width: 40px; height: 40px; cursor: pointer; border: none; background: none;">
+                                                <input type="text" [(ngModel)]="group.colorName" name="groupColorName_{{groupIndex}}" class="form-input" placeholder="Tên/Mã màu" style="flex: 1;" required>
+                                                <button type="button" class="btn-danger" style="padding: 5px 10px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;" (click)="removeColorGroup(groupIndex)">Xóa nhóm</button>
+                                            </div>
+
+                                            <div class="image-list-group">
+                                                @for (url of group.imageUrls; track $index; let imgIndex = $index) {
+                                                    <div class="image-input-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                                        <input type="file" (change)="onFileSelected($event, groupIndex, imgIndex)" class="form-input" [disabled]="isUploading" accept="image/*" style="flex: 1;">
+                                                        @if (url && url.trim() !== '') {
+                                                            <div class="image-preview-small" style="width: 50px; height: 50px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden;">
+                                                                <img [src]="url" alt="Preview" style="width: 100%; height: 100%; object-fit: cover;">
+                                                            </div>
+                                                        }
+                                                        <button type="button" (click)="removeImageFromGroup(group, imgIndex)" style="background: #e2e8f0; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;">-</button>
+                                                    </div>
+                                                }
+                                                <button type="button" (click)="addImageToGroup(group)" style="background: none; border: 1px dashed #667eea; color: #667eea; padding: 5px 15px; border-radius: 4px; cursor: pointer; width: 100%;">+ Thêm ảnh</button>
+                                            </div>
                                         </div>
                                     }
-                                    <button type="button" class="add-feature-btn" (click)="addImageField()">+ Thêm ảnh</button>
+                                    <button type="button" (click)="addColorGroup()" style="background: #e0e7ff; color: #4f46e5; border: 1px dashed #4f46e5; padding: 10px;">+ Thêm Nhóm Màu Mới</button>
                                 </div>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label class="form-label">Mô tả</label>
+                                <textarea [(ngModel)]="productForm.description" name="description" class="form-input" rows="3"></textarea>
                             </div>
                         </div>
 
@@ -299,5 +324,6 @@
             </div>
         </div>
     }
+
   </div>
 </div>

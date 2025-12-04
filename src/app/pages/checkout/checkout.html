@@ -2,170 +2,88 @@
   <div class="container">
     <div *ngIf="!isLoading && cartItems.length > 0" class="checkout-content">
       <div class="checkout-layout">
+
         <div class="checkout-form-section">
           <div class="form-section">
             <h2>👤 Thông tin khách hàng</h2>
             <div class="form-grid">
-              <div class="form-group">
-                <label for="fullName">Họ và tên *</label>
-                <input type="text" id="fullName" [(ngModel)]="customerInfo.fullName" name="fullName" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label for="email">Email *</label>
-                <input type="email" id="email" [(ngModel)]="customerInfo.email" name="email" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label for="phone">Số điện thoại *</label>
-                <input type="tel" id="phone" [(ngModel)]="customerInfo.phone" name="phone" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label for="address">Địa chỉ *</label>
-                <input type="text" id="address" [(ngModel)]="customerInfo.address" name="address" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label for="city">Tỉnh/Thành phố *</label>
-                <input type="text" id="city" [(ngModel)]="customerInfo.city" name="city" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label for="district">Quận/Huyện *</label>
-                <input type="text" id="district" [(ngModel)]="customerInfo.district" name="district" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label for="ward">Phường/Xã</label>
-                <input type="text" id="ward" [(ngModel)]="customerInfo.ward" name="ward" class="form-input">
-              </div>
-              <div class="form-group full-width">
-                <label for="note">Ghi chú (Tùy chọn)</label>
-                <textarea id="note" [(ngModel)]="customerInfo.note" name="note" class="form-input" rows="3"></textarea>
-              </div>
+              <div class="form-group"><label>Họ và tên *</label><input type="text" [(ngModel)]="customerInfo.fullName" name="fullName" class="form-input" required></div>
+              <div class="form-group"><label>Email *</label><input type="email" [(ngModel)]="customerInfo.email" name="email" class="form-input" required></div>
+              <div class="form-group"><label>Số điện thoại *</label><input type="tel" [(ngModel)]="customerInfo.phone" name="phone" class="form-input" required></div>
+              <div class="form-group"><label>Địa chỉ *</label><input type="text" [(ngModel)]="customerInfo.address" name="address" class="form-input" required></div>
+              <div class="form-group"><label>Tỉnh/Thành phố *</label><input type="text" [(ngModel)]="customerInfo.city" name="city" class="form-input" required></div>
+              <div class="form-group"><label>Quận/Huyện *</label><input type="text" [(ngModel)]="customerInfo.district" name="district" class="form-input" required></div>
+              <div class="form-group full-width"><label>Ghi chú</label><textarea [(ngModel)]="customerInfo.note" name="note" class="form-input" rows="3"></textarea></div>
             </div>
           </div>
 
           <div class="form-section">
-            <h2>💳 Phương thức thanh toán</h2>
+            <h2>💳 Thanh toán</h2>
             <div class="payment-methods">
               <label class="payment-method" [class.active]="paymentMethod === 'COD'">
                 <input type="radio" name="payment" value="COD" [(ngModel)]="paymentMethod" hidden>
-                <div class="payment-content">
-                  <div class="payment-icon">💰</div>
-                  <div class="payment-info">
-                    <div class="payment-title">Thanh toán khi nhận hàng (COD)</div>
-                    <div class="payment-desc">Trả tiền mặt khi nhận được hàng</div>
-                  </div>
-                  
-                </div>
+                <div class="payment-content"><div class="payment-icon">💰</div><div class="payment-info"><div class="payment-title">COD (Tiền mặt)</div><div class="payment-desc">Thanh toán khi nhận hàng</div></div></div>
               </label>
-
-              <label class="payment-method" [class.active]="paymentMethod === 'CREDIT_CARD'">
-                <input type="radio" name="payment" value="CREDIT_CARD" [(ngModel)]="paymentMethod" hidden>
-                <div class="payment-content">
-                  <div class="payment-icon">💳</div>
-                  <div class="payment-info">
-                    <div class="payment-title">Thẻ Tín dụng/Ghi nợ</div>
-                    <div class="payment-desc">Thanh toán qua thẻ Visa, Master...</div>
-                  </div>
-                  
-                </div>
-              </label>
-
-              <label class="payment-method" [class.active]="paymentMethod === 'PAYPAL'">
-                <input type="radio" name="payment" value="PAYPAL" [(ngModel)]="paymentMethod" hidden>
-                <div class="payment-content">
-                  <div class="payment-icon">🅿️</div>
-                  <div class="payment-info">
-                    <div class="payment-title">PayPal</div>
-                    <div class="payment-desc">Thanh toán qua ví PayPal</div>
-                  </div>
-                  
-                </div>
-              </label>
-
               <label class="payment-method" [class.active]="paymentMethod === 'BANK_TRANSFER'">
                 <input type="radio" name="payment" value="BANK_TRANSFER" [(ngModel)]="paymentMethod" hidden>
-                <div class="payment-content">
-                  <div class="payment-icon">🏦</div>
-                  <div class="payment-info">
-                    <div class="payment-title">Chuyển khoản ngân hàng</div>
-                    <div class="payment-desc">Chuyển khoản qua VietQR/Số tài khoản</div>
-                  </div>
-                  
-                </div>
-                
+                <div class="payment-content"><div class="payment-icon">🏦</div><div class="payment-info"><div class="payment-title">Chuyển khoản</div><div class="payment-desc">Qua VietQR/Ngân hàng</div></div></div>
                 @if (paymentMethod === 'BANK_TRANSFER') {
                   <div class="qr-code-section">
-                    <p>Quét mã QR để hoàn tất thanh toán:</p>
-                    <img src="images/qr-thank.jpg" alt="Mã QR Chuyển khoản" class="qr-image">
-                    <div class="bank-details">
-                      <strong>Ngân hàng:</strong> Điền ngân hàng<br>
-                      <strong>Số tài khoản:</strong> Điền số tài khoản<br>
-                      <strong>Chủ tài khoản:</strong> điền tên 
-                    </div>
+                    <p>Quét mã để thanh toán:</p>
+                    <img src="images/qrthanh.jpg" alt="QR Code" class="qr-image">
+                    <div class="bank-details"><strong>BIDV</strong> - 3300576940<br>NGUYEN TIEN THANH</div>
                   </div>
                 }
-                </label>
+              </label>
             </div>
           </div>
         </div>
 
         <div class="order-summary-section">
           <div class="summary-card">
-            <h3>📦 Đơn hàng của bạn</h3>
-            
-            <div class="order-items">
-              @for (item of cartItems; track item.productId) {
+            <h3>📦 Đơn hàng ({{ cartItems.length }})</h3>
+
+            <div class="order-items-container">
+              @for (item of cartItems; track trackByFn($index, item)) {
                 <div class="order-item">
-                  <div class="item-image">
-                    <img [src]="item.image || 'assets/images/default-product.png'" [alt]="item.productName">
-                    <span class="item-quantity">{{ item.quantity }}</span>
+                  <div class="item-image-wrapper">
+                    <img [src]="getFullImageUrl(item.image)" [alt]="item.productName" class="item-img">
+                    <span class="item-qty-badge">{{ item.quantity }}</span>
                   </div>
-                  <div class="item-info">
-                    <div class="item-name">{{ item.productName }}</div>
-                    <div class="item-brand">{{ item.price | number }}₫</div>
-                    
-                    <div class="item-controls">
-                      <div class="quantity-controls-checkout">
-                        <button (click)="updateQuantityInCheckout(item, item.quantity - 1)" [disabled]="item.quantity <= 1">
-                          −
-                        </button>
-                        <span>{{ item.quantity }}</span>
-                        <button (click)="updateQuantityInCheckout(item, item.quantity + 1)">
-                          +
-                        </button>
-                      </div>
-                      <button class="remove-btn-checkout" (click)="removeItemFromCheckout(item)">
-                        Xóa
-                      </button>
+
+                  <div class="item-details">
+                    <div class="item-header">
+                        <span class="item-name" title="{{ item.productName }}">{{ item.productName }}</span>
+                        <span class="item-price">{{ item.price | number }}₫</span>
                     </div>
+
+                    <div class="item-actions">
+                       <div class="qty-control">
+                          <button (click)="updateQuantityInCheckout(item, item.quantity - 1)" [disabled]="item.quantity <= 1">−</button>
+                          <span class="qty-val">{{ item.quantity }}</span>
+                          <button (click)="updateQuantityInCheckout(item, item.quantity + 1)">+</button>
+                       </div>
+                       <button class="delete-btn" (click)="removeItemFromCheckout(item)">Xóa</button>
                     </div>
-                  <div class="item-price">
-                    {{ (item.price * item.quantity) | number }}₫
                   </div>
                 </div>
               }
             </div>
 
             <div class="order-totals">
-              <div class="summary-row">
-                <span>Tạm tính:</span>
-                <span>{{ total | number }}₫</span>
-              </div>
-              <div class="summary-row">
-                <span>Phí vận chuyển:</span>
-                <span>{{ shippingFee | number }}₫</span>
-              </div>
-              <div class="summary-row grand-total">
-                <strong>Tổng cộng:</strong>
-                <strong>{{ grandTotal | number }}₫</strong>
-              </div>
+              <div class="row"><span>Tạm tính</span><span>{{ total | number }}₫</span></div>
+              <div class="row"><span>Vận chuyển</span><span>Miễn phí</span></div>
+              <div class="divider"></div>
+              <div class="row total"><strong>Tổng cộng</strong><strong class="highlight">{{ grandTotal | number }}₫</strong></div>
             </div>
-            
+
             <button class="btn-place-order" (click)="placeOrder()" [disabled]="isLoading">
-              <span *ngIf="!isLoading">Đặt Hàng</span>
-              <span *ngIf="isLoading" class="loading-spinner-btn"></span>
+              <span *ngIf="!isLoading">ĐẶT HÀNG</span>
+              <span *ngIf="isLoading" class="loader"></span>
             </button>
-            
           </div>
         </div>
+
       </div>
     </div>
   </div>

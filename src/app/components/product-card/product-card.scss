@@ -53,24 +53,36 @@
   z-index: 2;
 }
 
+/* --- STYLE MỚI: CON DẤU HẾT HÀNG (STAMP STYLE) --- */
 .out-of-stock-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  /* Nền trắng mờ thay vì đen */
+  background: rgba(255, 255, 255, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
+  z-index: 3;
+  backdrop-filter: blur(2px); /* Làm mờ ảnh phía sau */
 
   span {
-    color: white;
-    font-weight: 600;
+    color: #e53e3e; /* Màu đỏ */
+    font-weight: 800;
     font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: 3px solid #e53e3e;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transform: rotate(-12deg); /* Nghiêng giống đóng dấu */
   }
 }
+/* ------------------------------------------------ */
 
 .product-actions {
   position: absolute;
@@ -82,6 +94,7 @@
   opacity: 0;
   transform: translateY(-10px);
   transition: all 0.3s ease;
+  z-index: 4;
 
   .action-btn {
     width: 36px;
@@ -103,8 +116,11 @@
       transform: scale(1.1);
     }
 
-    &.wishlist-btn:hover {
-      background: #ff4757;
+    &.wishlist-btn {
+      &:hover, &.active {
+        background: #ff4757;
+        color: white;
+      }
     }
   }
 }
@@ -126,6 +142,11 @@
     color: var(--text-dark);
     margin-bottom: 0.25rem;
     line-height: 1.4;
+    /* Cắt text nếu quá dài */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .product-brand {
@@ -189,37 +210,12 @@
     box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
   }
 
+  /* Style nút xám khi hết hàng */
   &.disabled {
-    background: var(--text-lighter);
+    background: #a0aec0;
+    color: #edf2f7;
     cursor: not-allowed;
     transform: none;
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    transition: all 0.3s ease;
-    transform: translate(-50%, -50%);
-  }
-
-  &:active:not(.disabled)::before {
-    width: 100%;
-    height: 100%;
-  }
-}
-.product-actions {
-  .action-btn {
-    // ...
-    &.wishlist-btn:hover,
-    &.wishlist-btn.active { // THÊM DÒNG NÀY
-      background: #ff4757;
-      color: white;
-    }
+    box-shadow: none;
   }
 }

@@ -49,6 +49,8 @@
 
 /* Product Images */
 .product-images {
+  width: 100%;
+
   .main-image {
     position: relative;
     background: var(--bg-light);
@@ -59,11 +61,20 @@
     align-items: center;
     justify-content: center;
     height: 400px;
+    width: 100%;
+    overflow: hidden;
 
     .product-image {
       max-width: 100%;
       max-height: 100%;
       object-fit: contain;
+    }
+
+    .product-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 12px;
     }
 
     .discount-badge {
@@ -76,6 +87,7 @@
       border-radius: 8px;
       font-size: 0.9rem;
       font-weight: 700;
+      z-index: 2;
     }
 
     .out-of-stock-overlay {
@@ -84,34 +96,56 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(255, 255, 255, 0.6);
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 12px;
+      z-index: 10;
+      backdrop-filter: blur(2px);
 
       span {
-        color: white;
-        font-weight: 600;
-        font-size: 1.2rem;
+        color: #e53e3e;
+        font-weight: 800;
+        font-size: 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        border: 3px solid #e53e3e;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 10px 25px rgba(229, 62, 62, 0.2);
+        transform: rotate(-10deg);
+        transition: all 0.3s ease;
+      }
+
+      &:hover span {
+        transform: rotate(0deg) scale(1.1);
       }
     }
   }
 
   .image-thumbnails {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 1rem;
 
     .thumbnail {
-      width: 80px;
-      height: 80px;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1 / 1;
       border: 2px solid var(--border-color);
       border-radius: 8px;
       cursor: pointer;
-      padding: 0.5rem;
+      padding: 4px;
       background: white;
       transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
       &.active {
         border-color: var(--primary-color);
@@ -119,13 +153,26 @@
 
       &:hover {
         border-color: var(--primary-color);
-        transform: scale(1.05);
+        transform: translateY(-2px);
       }
 
       img {
         width: 100%;
         height: 100%;
         object-fit: contain;
+      }
+
+      &.video-thumb {
+        background: #000;
+        .video-icon {
+          position: absolute;
+          top: 50%; left: 50%; transform: translate(-50%, -50%);
+          font-size: 1.2rem; color: white; opacity: 0.9; z-index: 2;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        video {
+          width: 100%; height: 100%; object-fit: cover; opacity: 0.7;
+        }
       }
     }
   }
@@ -153,6 +200,11 @@
       .product-brand {
         color: var(--primary-color);
         font-weight: 500;
+      }
+
+      .product-stock.out-of-stock {
+          color: #e53e3e;
+          font-weight: 700;
       }
     }
   }
@@ -203,6 +255,66 @@
     color: var(--text-lighter);
     text-decoration: line-through;
   }
+
+  .discount-amount {
+      background: #e6fffa;
+      color: #047857;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      font-weight: 600;
+  }
+}
+
+.product-color-variants {
+  margin-bottom: 1.5rem;
+
+  .color-label {
+    display: block;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+  }
+
+  .variant-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+
+    .variant-swatch {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.8rem;
+      border: 2px solid var(--border-color);
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-1px);
+      }
+
+      &.active {
+        border-color: var(--primary-color);
+        background-color: rgba(102, 126, 234, 0.05);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+      }
+
+      .color-indicator {
+        border-radius: 50%;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+      }
+
+      .variant-name {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-dark);
+      }
+    }
+  }
 }
 
 .product-short-desc {
@@ -212,6 +324,9 @@
     color: var(--text-light);
     line-height: 1.6;
     font-size: 1.1rem;
+
+    /* SỬA: Thêm dòng này để giữ xuống dòng */
+    white-space: pre-line;
   }
 }
 
@@ -233,6 +348,14 @@
       padding: 0.5rem 0;
       color: var(--text-light);
       border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .feature-icon {
+        color: var(--primary-color);
+        font-weight: bold;
+      }
 
       &:last-child {
         border-bottom: none;
@@ -322,6 +445,21 @@
       padding: 1rem 2rem;
       font-size: 1rem;
       font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+
+      &:disabled {
+        background: #cbd5e0;
+        color: #718096;
+        cursor: not-allowed;
+        border-color: transparent;
+      }
 
       @media (max-width: 480px) {
         width: 100%;
@@ -329,7 +467,7 @@
     }
 
     .add-to-cart-btn {
-      background: transparent;
+      background: white;
       color: var(--primary-color);
       border: 2px solid var(--primary-color);
 
@@ -337,6 +475,30 @@
         background: var(--primary-color);
         color: white;
       }
+    }
+
+    .buy-now-btn {
+      background: var(--primary-gradient);
+      color: white;
+
+      &:hover:not(:disabled) {
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+          transform: translateY(-2px);
+      }
+    }
+
+    .btn-wishlist {
+        width: 50px; height: 50px;
+        border-radius: 8px;
+        border: 2px solid #e2e8f0;
+        background: white;
+        cursor: pointer;
+        font-size: 1.2rem;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+
+        &:hover { border-color: #ff4757; color: #ff4757; }
+        &.in-wishlist { background: #fff0f3; border-color: #ff4757; color: #ff4757; }
     }
   }
 }
@@ -383,6 +545,7 @@
     display: flex;
     border-bottom: 2px solid var(--border-color);
     margin-bottom: 2rem;
+    overflow-x: auto;
 
     .tab-header {
       padding: 1rem 2rem;
@@ -395,6 +558,7 @@
       transition: all 0.3s ease;
       border-bottom: 2px solid transparent;
       margin-bottom: -2px;
+      white-space: nowrap;
 
       &.active {
         color: var(--primary-color);
@@ -420,6 +584,9 @@
         color: var(--text-light);
         line-height: 1.6;
         margin-bottom: 1.5rem;
+
+        /* SỬA: Thêm dòng này để giữ xuống dòng trong tab mô tả */
+        white-space: pre-line;
       }
     }
   }
@@ -481,168 +648,6 @@
   }
 }
 
-.reviews-summary {
-  .overall-rating {
-    text-align: center;
-    padding: 2rem;
-    background: var(--bg-light);
-    border-radius: 12px;
-    margin-bottom: 2rem;
-
-    .rating-score {
-      font-size: 3rem;
-      font-weight: 700;
-      color: var(--primary-color);
-      margin-bottom: 0.5rem;
-    }
-
-    .rating-stars-large {
-      font-size: 1.5rem;
-      color: #ffc107;
-      margin-bottom: 0.5rem;
-    }
-
-    .rating-text {
-      color: var(--text-light);
-    }
-  }
-
-  .reviews-list {
-    .review-item {
-      padding: 1.5rem;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      margin-bottom: 1rem;
-
-      .review-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-
-        .reviewer-name {
-          font-weight: 600;
-          color: var(--text-dark);
-        }
-
-        .review-rating {
-          color: #ffc107;
-        }
-      }
-
-      .review-content {
-        color: var(--text-light);
-        line-height: 1.6;
-        margin-bottom: 0.5rem;
-      }
-
-      .review-date {
-        font-size: 0.8rem;
-        color: var(--text-lighter);
-      }
-    }
-  }
-}
-
-/* Related Products */
-.related-products {
-  .section-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 2rem;
-    color: var(--text-dark);
-    text-align: center;
-  }
-
-  .related-products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-  }
-
-  .related-product-card {
-    background: var(--bg-light);
-    border-radius: 12px;
-    padding: 1.5rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    color: inherit;
-
-    &:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow);
-    }
-
-    .product-image {
-      height: 150px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1rem;
-
-      img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-      }
-    }
-
-    .product-info {
-      .product-name {
-        font-size: 1rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: var(--text-dark);
-      }
-
-      .product-brand {
-        color: var(--text-light);
-        font-size: 0.8rem;
-        margin-bottom: 0.5rem;
-      }
-
-      .product-price {
-        .current-price {
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: var(--primary-color);
-        }
-
-        .original-price {
-          font-size: 0.9rem;
-          color: var(--text-lighter);
-          text-decoration: line-through;
-        }
-      }
-    }
-  }
-}
-
-.loading-state {
-  text-align: center;
-  padding: 4rem 2rem;
-
-  .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid var(--border-color);
-    border-top: 4px solid var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 1rem;
-  }
-
-  p {
-    color: var(--text-light);
-  }
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .reviews-content {
   display: grid;
   grid-template-columns: 1fr 2fr;
@@ -657,7 +662,7 @@
   background: var(--bg-light);
   padding: 1.5rem;
   border-radius: 12px;
-  align-self: flex-start; // Dính ở trên
+  align-self: flex-start;
 
   h3 {
     margin-bottom: 1.5rem;
@@ -687,48 +692,31 @@
       outline: none;
       border-color: var(--primary-color);
     }
-    &:disabled {
-      background: #e2e8f0;
-      cursor: not-allowed;
-    }
   }
 
   textarea.form-input {
     resize: vertical;
     min-height: 100px;
   }
-
-  .btn-primary {
-    width: 100%;
-    &:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
-    }
-  }
 }
-
-/* CSS Cho Hệ Thống Vote Sao  */
-
 
 .star-rating-input {
   display: flex;
-  flex-direction: row-reverse; 
-  justify-content: center;   
+  flex-direction: row-reverse;
+  justify-content: center;
 }
 
 .star-rating-input input[type="radio"] {
-  display: none; 
+  display: none;
 }
 
 .star-rating-input label {
-  
   font-size: 2.5rem;
   color: #ddd;
   cursor: pointer;
   padding: 0 2px;
   transition: color 0.2s;
 }
-
 
 .star-rating-input label:hover,
 .star-rating-input label:hover ~ label {
@@ -738,7 +726,7 @@
 .star-rating-input input[type="radio"]:checked ~ label {
   color: #f7b731;
 }
-/* CSS cho danh sách review */
+
 .reviews-list-container {
   h3 {
     font-size: 1.25rem;
@@ -746,14 +734,6 @@
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 1.5rem;
   }
-}
-
-.review-item-placeholder {
-  text-align: center;
-  padding: 3rem;
-  color: var(--text-light);
-  border: 2px dashed var(--border-color);
-  border-radius: 12px;
 }
 
 .reviews-list {
@@ -801,81 +781,50 @@
   }
 }
 
-
-.reviews-summary {
-  display: none;
-}
-.review-login-prompt {
-  background: var(--bg-light);
-  padding: 2rem;
-  border-radius: 12px;
-  text-align: center;
-  align-self: flex-start;
-  border: 1px dashed var(--border-color);
-
-  h3 {
-    margin-bottom: 1rem;
-    font-size: 1.25rem;
+/* Related Products */
+.related-products {
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    color: var(--text-dark);
+    text-align: center;
   }
-  p {
-    color: var(--text-light);
-    line-height: 1.6;
-    margin: 0;
-    
-    a {
-      color: var(--primary-color);
-      font-weight: 600;
-      text-decoration: none;
-      &:hover {
-        text-decoration: underline;
-      }
+
+  .related-products-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Cố định 4 cột */
+    gap: 1.5rem;
+
+    @media (max-width: 1024px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
     }
   }
 }
-/* Thêm CSS cho video */
-.product-images {
-  .main-image {
-    .product-video {
-      /* SỬA LỖI KÍCH THƯỚC:
-         Dùng object-fit: cover để lấp đầy khung 400px
-         Và set width/height 100% để nó tuân theo .main-image
-      */
-      width: 100%;
-      height: 100%;
-      object-fit: cover; /* <-- Thay đổi quan trọng ở đây */
-      border-radius: 12px;
-      
-      /* (Xóa max-width và max-height) */
+
+.admin-notice {
+    background: #fff3cd;
+    border: 1px solid #ffeeba;
+    color: #856404;
+    padding: 1rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+
+    .admin-icon { font-size: 1.5rem; }
+    .admin-text {
+        display: flex; flex-direction: column;
+        strong { font-size: 1rem; }
+        span { font-size: 0.85rem; }
     }
-  }
-
-  .image-thumbnails {
-    .thumbnail {
-      position: relative;
-      overflow: hidden; // Giúp ẩn video
-
-      &.video-thumb {
-        background: #000;
-        
-        .video-icon {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          font-size: 1.5rem;
-          color: white;
-          opacity: 0.8;
-          z-index: 2;
-        }
-
-        video {
-          // Dùng video làm thumbnail
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          opacity: 0.6; // Làm mờ đi để icon nổi lên
-        }
-      }
-    }
-  }
 }

@@ -15,13 +15,13 @@ import { ProductCard } from '../../components/product-card/product-card';
   styleUrl: './products.scss',
 })
 export class Products implements OnInit {
-  
+
   // SỬA: KHÔI PHỤC TẤT CẢ CÁC THUỘC TÍNH BỊ MẤT
-  products: Product[] = []; 
-  filteredProducts: Product[] = []; 
+  products: Product[] = [];
+  filteredProducts: Product[] = [];
   brands: string[] = [];
   headphoneTypes: string[] = [];
-  
+
   searchTerm: string = '';
   selectedCategory: string = 'all';
   selectedBrand: string = 'all';
@@ -29,6 +29,7 @@ export class Products implements OnInit {
   selectedType: string = 'all';
   showMobileFilters: boolean = false;
   isLoading: boolean = true;
+  selectedSort: string = 'default'; // FIX: Thêm dòng này để sửa lỗi TS2339
 
   categories = [
     { value: 'all', label: 'Tất cả sản phẩm' },
@@ -44,7 +45,7 @@ export class Products implements OnInit {
 
   constructor(
     private productService: ProductService,
-    private router: Router 
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -69,7 +70,7 @@ export class Products implements OnInit {
       }
     });
   }
-  
+
   loadFilterOptions(): void {
     this.productService.getBrands().subscribe({
       next: (brands) => this.brands = brands,
@@ -84,13 +85,13 @@ export class Products implements OnInit {
 
   onFilterChange(): void { this.applyFilters(); }
   onSearchChange(): void { this.applyFilters(); }
-  
+
   applyFilters(): void {
     this.isLoading = true;
-    let filtered = this.products; 
+    let filtered = this.products;
 
     if (this.searchTerm) {
-      filtered = filtered.filter(p => 
+      filtered = filtered.filter(p =>
         p.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         p.brand.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
@@ -109,19 +110,50 @@ export class Products implements OnInit {
     // SỬA LỖI TS2339: Thay .some() bằng .includes()
     // Lọc theo kết nối (nếu có)
     if (this.selectedConnectivity.length > 0) {
-      filtered = filtered.filter(p => 
+      filtered = filtered.filter(p =>
         p.connectivity && this.selectedConnectivity.includes(p.connectivity)
       );
     }
-    
+
+    // THÊM LOGIC SẮP XẾP
+    filtered = this.sortProducts(filtered);
+
     this.filteredProducts = filtered;
     this.isLoading = false;
   }
-  
+
+  // THÊM HÀM SẮP XẾP
+  sortProducts(products: Product[]): Product[] {
+
+    return products.sort((a, b) => {
+      // 1. Luôn đẩy hết hàng xuống cuối (chỉ khi stock <= 0)
+      const stockA = a.stock || 0;
+      const stockB = b.stock || 0;
+
+      if (stockA <= 0 && stockB > 0) return 1;
+      if (stockA > 0 && stockB <= 0) return -1;
+
+      // 2. Áp dụng sắp xếp chính
+      switch (this.selectedSort) {
+        case 'name_asc':
+          return a.name.localeCompare(b.name);
+        case 'name_desc':
+          return b.name.localeCompare(a.name);
+        case 'price_asc':
+          return a.price - b.price;
+        case 'price_desc':
+          return b.price - a.price;
+        case 'default':
+        default:
+          return 0; // Giữ nguyên thứ tự từ API
+      }
+    });
+  }
+
   viewProduct(productId: string): void {
     this.router.navigate(['/products', productId]);
   }
-  
+
   toggleConnectivity(connectivity: string): void {
     const index = this.selectedConnectivity.indexOf(connectivity);
     if (index > -1) {
@@ -155,9 +187,9 @@ export class Products implements OnInit {
   }
 
   hasActiveFilters(): boolean {
-    return this.selectedCategory !== 'all' || 
-           this.selectedBrand !== 'all' || 
-           this.selectedConnectivity.length > 0 || 
+    return this.selectedCategory !== 'all' ||
+           this.selectedBrand !== 'all' ||
+           this.selectedConnectivity.length > 0 ||
            this.selectedType !== 'all' ||
            this.searchTerm !== '';
   }

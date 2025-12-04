@@ -10,13 +10,13 @@ import { ProductService } from '../../services/product';
   selector: 'app-home',
   standalone: true,
   // SỬA: Xóa 'ProductCard' khỏi imports
-  imports: [CommonModule, RouterModule, ProductsGrid], 
+  imports: [CommonModule, RouterModule, ProductsGrid],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })
 export class Home implements OnInit {
-  heroProducts: Product[] = []; 
-  allProducts: Product[] = []; 
+  heroProducts: Product[] = [];
+  allProducts: Product[] = [];
   filteredProducts: Product[] = [];
   activeCategory: string = 'all';
 
@@ -36,15 +36,15 @@ export class Home implements OnInit {
     if (url.startsWith('http')) {
       return url;
     }
-    return `http://localhost:8080${url}`; 
+    return `http://localhost:8080${url}`;
   }
 
   // SỬA: Logic thông minh để chọn ảnh (Ưu tiên ảnh bìa)
   getSafeDisplayImage(product: Product): string {
     const defaultPlaceholder = 'assets/images/default-product.png';
     let imageUrl = this.getFullImageUrl(product.image);
-    
-    if (!imageUrl || imageUrl.endsWith('default-product.png')) { 
+
+    if (!imageUrl || imageUrl.endsWith('default-product.png')) {
       if (product.images && product.images.length > 0) {
         const firstGalleryImage = this.getFullImageUrl(product.images[0]);
         if (firstGalleryImage && !firstGalleryImage.endsWith('default-product.png')) {
@@ -67,9 +67,17 @@ export class Home implements OnInit {
 
   loadAllProductsForTabs(): void {
     this.productService.getAllProducts().subscribe(products => {
-      // SỬA: Không cần .map nữa (product-card đã tự xử lý)
-      this.allProducts = products;
-      this.selectCategory(this.activeCategory); 
+      // SỬA: Lọc sản phẩm, ưu tiên hàng còn hàng lên trước (Issue 14)
+      const sortedProducts = products.sort((a, b) => {
+        const stockA = a.stock || 0;
+        const stockB = b.stock || 0;
+        if (stockA <= 0 && stockB > 0) return 1;
+        if (stockA > 0 && stockB <= 0) return -1;
+        return 0;
+      });
+
+      this.allProducts = sortedProducts;
+      this.selectCategory(this.activeCategory);
     });
   }
 

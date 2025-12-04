@@ -1,18 +1,6 @@
-/* XÓA HẾT NỘI DUNG CŨ VÀ THAY BẰNG CODE NÀY */
-/* (Style này đã bao gồm các nút điều khiển mới) */
-
-:root {
-  --primary-color: #667eea;
-  --bg-light: #f7fafc;
-  --border-color: #e2e8f0;
-  --text-dark: #2d3748;
-  --text-light: #4a5568;
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
 .checkout-page {
-  padding: 3rem 0;
-  background: var(--bg-light);
+  padding: 2rem 0;
+  background: #f3f4f6;
   min-height: 100vh;
 }
 
@@ -24,378 +12,127 @@
 
 .checkout-layout {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 1.5fr 1fr; /* Chia tỉ lệ cột */
   gap: 2rem;
   align-items: flex-start;
 
-  @media (max-width: 968px) {
-    grid-template-columns: 1fr;
-  }
+  @media (max-width: 968px) { grid-template-columns: 1fr; }
 }
 
-.checkout-form-section {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
+/* FORM STYLES */
 .form-section {
   background: white;
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
 
-  h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-dark);
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-color);
-  }
+  h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.75rem; }
 }
 
 .form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+  @media (max-width: 600px) { grid-template-columns: 1fr; }
 
   .form-group {
-    &.full-width {
-      grid-column: 1 / -1;
-    }
-
-    label {
-      display: block;
-      font-weight: 600;
-      color: var(--text-dark);
-      margin-bottom: 0.5rem;
-    }
-
+    &.full-width { grid-column: 1 / -1; }
+    label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.4rem; color: #4b5563; }
     .form-input {
-      width: 100%;
-      padding: 0.85rem 1rem;
-      border: 2px solid var(--border-color);
-      border-radius: 8px;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-
-      &:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-      }
+      width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem;
+      &:focus { border-color: #6366f1; outline: none; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1); }
     }
-    
-    textarea.form-input {
-      resize: vertical;
-      min-height: 100px;
-    }
+    textarea.form-input { min-height: 80px; resize: vertical; }
   }
 }
 
-/* Payment Methods */
+/* PAYMENT */
 .payment-methods {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-
+  display: flex; flex-direction: column; gap: 0.75rem;
   .payment-method {
-    border: 2px solid var(--border-color);
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    overflow: hidden;
-
-    &.active {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    &:hover {
-      border-color: var(--primary-color);
-    }
-
-    .payment-content {
-      padding: 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-      position: relative;
-    }
-
-    .payment-icon {
-      font-size: 2rem;
-    }
-
-    .payment-info {
-      flex: 1;
-    }
-
-    .payment-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--text-dark);
-    }
-
-    .payment-desc {
-      color: var(--text-light);
-      font-size: 0.9rem;
-    }
-
-    .payment-check {
-      font-size: 1.5rem;
-      color: var(--primary-color);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    &.active .payment-check {
-      opacity: 1;
-    }
+    border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; overflow: hidden; transition: all 0.2s;
+    &.active { border-color: #6366f1; background: #f5f7ff; }
+    .payment-content { display: flex; align-items: center; padding: 1rem; gap: 1rem; }
+    .payment-icon { font-size: 1.5rem; }
+    .payment-title { font-weight: 600; font-size: 0.95rem; color: #111; }
+    .payment-desc { font-size: 0.85rem; color: #6b7280; }
   }
-
   .qr-code-section {
-    padding: 1.5rem;
-    background: var(--bg-light);
-    border-top: 2px solid var(--border-color);
-    text-align: center;
-    animation: fadeIn 0.5s ease;
-
-    p {
-      color: var(--text-dark);
-      font-weight: 500;
-      margin-bottom: 1rem;
-    }
-
-    .qr-image {
-      max-width: 200px;
-      height: auto;
-      margin: 0 auto 1rem;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-    }
-    
-    .bank-details {
-      font-size: 0.9rem;
-      color: var(--text-light);
-      line-height: 1.6;
-    }
+    text-align: center; padding: 1rem; background: white; border-top: 1px dashed #e5e7eb;
+    p { margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 500; }
+    .qr-image { max-width: 150px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 0.5rem; }
+    .bank-details { font-size: 0.85rem; color: #4b5563; line-height: 1.4; }
   }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ORDER SUMMARY (RIGHT COLUMN) */
+.summary-card {
+  background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 1.5rem;
+  position: sticky; top: 100px;
+
+  h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; color: #1f2937; }
 }
 
-/* Order Summary */
-.order-summary-section {
-  position: sticky;
-  top: 100px; // Dành chỗ cho header
-
-  .summary-card {
-    background: white;
-    border-radius: 16px;
-    box-shadow: var(--shadow);
-    padding: 2rem;
-  }
-
-  h3 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-dark);
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-color);
-  }
+.order-items-container {
+  max-height: 400px; overflow-y: auto; padding-right: 8px; margin-bottom: 1.5rem;
+  /* Custom Scrollbar */
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
 }
 
-.order-items {
-  max-height: 300px;
-  overflow-y: auto;
-  padding-right: 10px;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+.order-item {
+  display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px dashed #e5e7eb;
+  &:first-child { padding-top: 0; }
+  &:last-child { border-bottom: none; }
 
-  .order-item {
-    display: flex;
-    gap: 1rem;
-    padding: 1rem 0;
-    align-items: center;
+  .item-image-wrapper {
+    position: relative; width: 64px; height: 64px; flex-shrink: 0;
+    .item-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1px solid #f3f4f6; }
+    .item-qty-badge {
+      position: absolute; top: -6px; right: -6px; background: #6366f1; color: white;
+      font-size: 0.7rem; font-weight: 700; width: 20px; height: 20px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; border: 2px solid white;
+    }
+  }
 
-    .item-image {
-      position: relative;
-      flex-shrink: 0;
+  .item-details {
+    flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 6px; min-width: 0;
 
-      img {
-        width: 60px;
-        height: 60px;
-        object-fit: contain;
-        border-radius: 8px;
-        background: var(--bg-light);
-      }
-
-      .item-quantity {
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        background: var(--primary-color);
-        color: white;
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid white;
-      }
+    .item-header {
+       display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;
+       .item-name { font-size: 0.9rem; font-weight: 600; color: #374151; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+       .item-price { font-size: 0.9rem; font-weight: 700; color: #111; white-space: nowrap; }
     }
 
-    .item-info {
-      flex: 1;
-      .item-name {
-        font-weight: 600;
-        color: var(--text-dark);
-        font-size: 0.9rem;
-      }
-      .item-brand { // Hiển thị giá
-        font-size: 0.9rem;
-        color: var(--text-light);
-        margin-bottom: 0.5rem;
-      }
-    }
+    .item-actions {
+      display: flex; justify-content: space-between; align-items: center;
 
-    .item-price {
-      font-weight: 600;
-      color: var(--text-dark);
-      font-size: 0.9rem;
-    }
+      .qty-control {
+        display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 6px; height: 28px;
+        button { width: 26px; height: 100%; border: none; background: transparent; cursor: pointer; color: #6b7280; font-size: 1rem; &:hover:not(:disabled) { color: #6366f1; background: #f9fafb; } &:disabled { opacity: 0.4; } }
+        .qty-val { font-size: 0.85rem; font-weight: 600; padding: 0 6px; min-width: 20px; text-align: center; }
+      }
 
-    /* CSS CHO CÁC NÚT ĐIỀU KHIỂN MỚI */
-    .item-controls {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-top: 0.75rem;
+      .delete-btn { font-size: 0.75rem; color: #ef4444; background: none; border: none; cursor: pointer; padding: 4px; &:hover { text-decoration: underline; } }
     }
-  
-    .quantity-controls-checkout {
-      display: flex;
-      align-items: center;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      overflow: hidden;
-  
-      button {
-        width: 28px;
-        height: 28px;
-        border: none;
-        background: white;
-        cursor: pointer;
-        font-size: 1.1rem;
-        color: var(--text-light);
-        transition: background 0.3s ease;
-  
-        &:hover:not(:disabled) {
-          background: var(--primary-color);
-          color: white;
-        }
-        &:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-      }
-  
-      span {
-        font-size: 0.9rem;
-        font-weight: 600;
-        padding: 0 0.5rem;
-        border-left: 1px solid var(--border-color);
-        border-right: 1px solid var(--border-color);
-      }
-    }
-  
-    .remove-btn-checkout {
-      background: none;
-      border: none;
-      color: #e53e3e;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 0.25rem;
-      
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-     /* KẾT THÚC CSS CHO NÚT MỚI */
   }
 }
 
 .order-totals {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 2rem;
-
-  .summary-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 1rem;
-    color: var(--text-light);
-
-    &.grand-total {
-      font-size: 1.25rem;
-      color: var(--text-dark);
-      font-weight: 700;
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 2px dashed var(--border-color);
-    }
-  }
+  margin-top: 1rem; border-top: 2px solid #f3f4f6; padding-top: 1rem;
+  .row { display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem; color: #4b5563; }
+  .divider { height: 1px; background: #e5e7eb; margin: 0.5rem 0; }
+  .row.total { margin-top: 0.5rem; font-size: 1.1rem; color: #1f2937; .highlight { color: #6366f1; font-size: 1.4rem; } }
 }
 
 .btn-place-order {
-  width: 100%;
-  padding: 1.25rem;
-  background: #28a745;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover:not(:disabled) {
-    background: #218838;
-    transform: translateY(-2px);
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-  
-  .loading-spinner-btn {
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-top: 3px solid white;
-    border-radius: 50%;
-    display: inline-block;
-    animation: spin 1s linear infinite;
-  }
+  width: 100%; padding: 1rem; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700;
+  cursor: pointer; margin-top: 1.5rem; transition: transform 0.2s, box-shadow 0.2s;
+  &:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+  &:disabled { opacity: 0.7; cursor: not-allowed; background: #9ca3af; }
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.loader {
+  width: 18px; height: 18px; border: 2px solid #fff; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite;
 }
+@keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

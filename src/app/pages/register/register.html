@@ -1,7 +1,6 @@
 <div class="register-page">
   <div class="container">
     <div class="register-container">
-      <!-- Left Side - Form -->
       <div class="register-form-section">
         <div class="form-header">
           <a routerLink="/" class="back-home">
@@ -12,7 +11,6 @@
         </div>
 
         <form (ngSubmit)="onSubmit()" class="register-form">
-          <!-- Full Name Field -->
           <div class="form-group">
             <label for="name" class="form-label">Họ và Tên</label>
             <input
@@ -26,7 +24,6 @@
             >
           </div>
 
-          <!-- Email Field -->
           <div class="form-group">
             <label for="email" class="form-label">Email</label>
             <input
@@ -40,7 +37,6 @@
             >
           </div>
 
-          <!-- Password Field -->
           <div class="form-group">
             <label for="password" class="form-label">Mật Khẩu</label>
             <input
@@ -54,7 +50,6 @@
             >
           </div>
 
-          <!-- Confirm Password Field -->
           <div class="form-group">
             <label for="confirmPassword" class="form-label">Xác Nhận Mật Khẩu</label>
             <input
@@ -68,7 +63,6 @@
             >
           </div>
 
-          <!-- Terms Agreement -->
           <div class="form-group terms-group">
             <label class="terms-label">
               <input
@@ -78,30 +72,27 @@
                 class="terms-checkbox"
               >
               <span class="terms-text">
-                Tôi đồng ý với 
-                <a href="#" class="terms-link">Điều khoản sử dụng</a> 
-                và 
+                Tôi đồng ý với
+                <a href="#" class="terms-link">Điều khoản sử dụng</a>
+                và
                 <a href="#" class="terms-link">Chính sách bảo mật</a>
                 của Atheng Audio
               </span>
             </label>
           </div>
 
-          <!-- Error Message -->
           @if (errorMessage) {
             <div class="error-message">
               {{ errorMessage }}
             </div>
           }
 
-          <!-- Success Message -->
           @if (successMessage) {
             <div class="success-message">
               {{ successMessage }}
             </div>
           }
 
-          <!-- Submit Button -->
           <button
             type="submit"
             class="register-btn"
@@ -115,34 +106,15 @@
           </button>
         </form>
 
-        <!-- Divider -->
-        <div class="divider">
-          <span>Hoặc</span>
-        </div>
-
-        <!-- Social Register -->
-        <div class="social-register">
-          <button class="social-btn google-btn">
-            <span class="social-icon">🔍</span>
-            Đăng ký với Google
-          </button>
-          <button class="social-btn facebook-btn">
-            <span class="social-icon">📘</span>
-            Đăng ký với Facebook
-          </button>
-        </div>
-
-        <!-- Login Link -->
         <div class="login-link">
           <p>Đã có tài khoản? <a routerLink="/login" class="link">Đăng nhập ngay</a></p>
         </div>
       </div>
 
-      <!-- Right Side - Benefits -->
       <div class="register-benefits">
         <div class="benefits-content">
           <h2>Lợi Ích Khi Tham Gia</h2>
-          
+
           <div class="benefits-list">
             <div class="benefit-item">
               <div class="benefit-icon">🎁</div>
@@ -179,7 +151,7 @@
 
           <div class="testimonial">
             <div class="testimonial-text">
-              "Atheng Audio đã mang đến cho tôi trải nghiệm âm thanh tuyệt vời. 
+              "Atheng Audio đã mang đến cho tôi trải nghiệm âm thanh tuyệt vời.
               Sản phẩm chất lượng và dịch vụ hỗ trợ rất chuyên nghiệp!"
             </div>
             <div class="testimonial-author">

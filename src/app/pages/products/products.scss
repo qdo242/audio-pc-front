@@ -149,6 +149,9 @@
   position: sticky;
   top: 20px;
 
+  max-height: calc(100vh - 120px); /* FIX: Đảm bảo không tràn màn hình */
+  overflow-y: auto; /* FIX: Bộ lọc bị tràn (Issue 12) */
+
   .filters-header {
     display: flex;
     justify-content: space-between;
@@ -226,12 +229,31 @@
 
 .products-grid-container {
   .products-grid-header {
+    display: flex; /* SỬA: Đảm bảo sắp xếp nằm ngang */
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 25px;
 
     .results-count {
       color: #666;
       font-size: 1rem;
       margin: 0;
+    }
+
+    .sort-controls { /* Thêm style cho Sort Control */
+        .sort-select {
+            padding: 8px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #333;
+            cursor: pointer;
+
+            &:focus {
+                outline: none;
+                border-color: #007bff;
+            }
+        }
     }
   }
 }

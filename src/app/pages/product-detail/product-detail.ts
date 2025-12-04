@@ -2,11 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule, NgForm } from '@angular/forms';
-import { Product, Review } from '../../interfaces/product';
+import { Product } from '../../interfaces/product';
 import { ProductService } from '../../services/product';
 import { AuthService } from '../../services/auth';
 import { CartService } from '../../services/cart';
 import { ProductCard } from '../../components/product-card/product-card';
+
+interface Review {
+  author: string;
+  rating: number;
+  comment: string;
+  createdAt?: string;
+}
 
 @Component({
   selector: 'app-product-detail',
@@ -17,24 +24,21 @@ import { ProductCard } from '../../components/product-card/product-card';
 })
 export class ProductDetail implements OnInit {
   product: Product | undefined;
-  selectedImage: string = ''; // Đây là media (ảnh/video) đang được hiển thị
+  selectedImage: string = '';
   quantity: number = 1;
   relatedProducts: Product[] = [];
   isLoading: boolean = true;
   activeTab: string = 'description';
 
-  // Biến quản lý media
+  selectedVariant: string | null = null;
+  variantImageMap: { [key: string]: string[] } = {};
+  filteredGalleryImages: string[] = [];
+
   videoUrl: string | null = null;
-  // coverImage: string | null = null; // SỬA: Không cần, dùng product.image
-  galleryImages: string[] = []; // Chỉ chứa ảnh (không chứa video)
   defaultPlaceholder = 'assets/images/default-product.png';
 
   isSubmittingReview = false;
-  newReview: Review = {
-    author: 'Khách hàng',
-    rating: 0,
-    comment: ''
-  };
+  newReview: Review = { author: 'Khách hàng', rating: 0, comment: '' };
 
   constructor(
     private route: ActivatedRoute,
@@ -45,8 +49,7 @@ export class ProductDetail implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    window.scrollTo(0, 0); 
-    
+    window.scrollTo(0, 0);
     this.route.params.subscribe(params => {
       const productId = params['id'];
       if (productId) {
@@ -55,54 +58,154 @@ export class ProductDetail implements OnInit {
     });
   }
 
-  // SỬA: Hàm getFullImageUrl giờ chấp nhận cả 'null'
   getFullImageUrl(url: string | undefined | null): string {
-    if (!url || url.trim() === '') {
-      return ''; 
-    }
-    if (url.startsWith('http')) {
-      return url; 
-    }
-    return `http://localhost:8080${url}`; 
+    if (!url || url.trim() === '') return '';
+    if (url.startsWith('http')) return url;
+    return `http://localhost:8080${url}`;
   }
 
+  isHex(str: string): boolean {
+      return /^#([0-9A-F]{3}){1,2}$/i.test(str);
+  }
+
+  private normalizeKey(key: string): string {
+      return key ? key.trim().toLowerCase() : '';
+  }
+
+  createVariantMap(product: Product): { [key: string]: string[] } {
+    const map: { [key: string]: string[] } = {};
+    const colors = product.colors || [];
+    colors.forEach(c => { map[this.normalizeKey(c)] = []; });
+
+    const allImages = product.images || [];
+    const unassignedImages: string[] = [];
+
+    allImages.forEach(imgUrl => {
+        const parts = imgUrl.split('?color=');
+        const rawUrl = parts[0];
+        const colorTag = parts.length > 1 ? decodeURIComponent(parts[1]) : null;
+        const fullUrl = this.getFullImageUrl(rawUrl);
+
+        if (colorTag) {
+            const normalizedTag = this.normalizeKey(colorTag);
+            if (map.hasOwnProperty(normalizedTag)) {
+                map[normalizedTag].push(fullUrl);
+            } else {
+                unassignedImages.push(fullUrl);
+            }
+        } else {
+            unassignedImages.push(fullUrl);
+        }
+    });
+
+    if (unassignedImages.length > 0) {
+        if (colors.length > 0) {
+             const firstColorKey = this.normalizeKey(colors[0]);
+             if (map[firstColorKey].length === 0) {
+                 map[firstColorKey].push(...unassignedImages);
+             }
+        } else {
+             map['default'] = unassignedImages;
+        }
+    }
+    return map;
+  }
 
   loadProduct(productId: string): void {
     this.isLoading = true;
     this.productService.getProductById(productId).subscribe({
       next: (product) => {
-        
-        // SỬA: LOGIC TÁCH MEDIA (Dùng model backend mới)
         this.product = product;
-        
-        // 1. Tách Video (Fix lỗi TS2345 bằng cách kiểm tra null trước)
         this.videoUrl = product.videoUrl ? this.getFullImageUrl(product.videoUrl) : null;
+        this.variantImageMap = this.createVariantMap(product);
 
-        // 2. Tách Gallery (product.images)
-        this.galleryImages = (product.images || []).map(img => this.getFullImageUrl(img));
+        this.showAllImages();
 
-        // 3. Lấy Ảnh Bìa (product.image)
-        const coverImage = this.getFullImageUrl(product.image);
-
-        // 4. SỬA: Set media hiển thị mặc định (Ưu tiên Ảnh Bìa > Ảnh Gallery đầu tiên > Video)
-        this.selectedImage = coverImage || this.galleryImages[0] || this.videoUrl || this.defaultPlaceholder;
-
-        // Cập nhật lại product (để đảm bảo rating/review không null)
         this.product = {
           ...product,
           rating: product.rating || 0,
           reviewCount: product.reviewCount || 0,
           features: product.features || [],
-        };
-        
+          supportPhone: (product as any).supportPhone || '1900 1234',
+          returnPolicyDays: (product as any).returnPolicyDays || 30,
+        } as Product;
+
+        if (this.product.stock <= 0) {
+            this.quantity = 0;
+        } else {
+            this.quantity = 1;
+        }
+
         this.loadRelatedProducts(this.product);
         this.isLoading = false;
       },
-      error: (error: any) => {
+      error: (error) => {
         console.error('Error loading product:', error);
         this.isLoading = false;
       }
     });
+  }
+
+  selectVariant(variantName: string | null): void {
+      if (this.selectedVariant === variantName && variantName !== null) {
+          this.showAllImages();
+          return;
+      }
+
+      this.selectedVariant = variantName;
+      this.filteredGalleryImages = [];
+
+      if (this.videoUrl) {
+          this.filteredGalleryImages.push(this.videoUrl);
+      }
+
+      if (variantName) {
+          const normalizedKey = this.normalizeKey(variantName);
+          let imagesForVariant = this.variantImageMap[normalizedKey];
+
+          if (!imagesForVariant && this.variantImageMap[variantName]) {
+              imagesForVariant = this.variantImageMap[variantName];
+          }
+
+          if (imagesForVariant && imagesForVariant.length > 0) {
+              this.filteredGalleryImages.push(...imagesForVariant);
+          } else {
+              if(this.product?.image) {
+                 this.filteredGalleryImages.push(this.getFullImageUrl(this.product.image.split('?')[0]));
+              }
+          }
+      } else {
+          if (this.variantImageMap['default']) {
+               this.filteredGalleryImages.push(...this.variantImageMap['default']);
+          }
+      }
+
+      if (this.filteredGalleryImages.length > 0) {
+          this.selectedImage = this.filteredGalleryImages[0];
+      } else {
+          this.selectedImage = this.defaultPlaceholder;
+      }
+  }
+
+  showAllImages(): void {
+      this.selectedVariant = null;
+      this.filteredGalleryImages = [];
+
+      if (this.videoUrl) this.filteredGalleryImages.push(this.videoUrl);
+
+      const allUrls = new Set<string>();
+      if (this.product?.image) {
+          allUrls.add(this.getFullImageUrl(this.product.image.split('?')[0]));
+      }
+      Object.values(this.variantImageMap).forEach(imgs => {
+          imgs.forEach(url => allUrls.add(url));
+      });
+
+      this.filteredGalleryImages.push(...Array.from(allUrls));
+
+      if (this.filteredGalleryImages.length > 0) {
+          this.selectedImage = this.filteredGalleryImages[0];
+      }
   }
 
   loadRelatedProducts(product: Product): void {
@@ -113,180 +216,114 @@ export class ProductDetail implements OnInit {
           .slice(0, 4)
           .map(p => ({
             ...p,
-            // Sửa: Lấy ảnh bìa hoặc gallery đầu tiên
-            image: this.getFullImageUrl(p.image) || this.getFullImageUrl(p.images?.[0]) || this.defaultPlaceholder
+            image: this.getFullImageUrl(p.image?.split('?')[0]) || this.defaultPlaceholder
           }));
       },
-      error: (error: any) => {
-        console.error('Error loading related products:', error);
-      }
+      error: (error: any) => console.error('Error loading related products:', error)
     });
   }
 
-  changeImage(image: string): void {
-    this.selectedImage = image;
-  }
+  changeImage(image: string): void { this.selectedImage = image; }
+  increaseQuantity(): void { if (this.product && this.quantity < this.product.stock) this.quantity++; else alert('Đã đạt số lượng tối đa!'); }
+  decreaseQuantity(): void { if (this.quantity > 1) this.quantity--; }
 
-  increaseQuantity(): void {
-    if (this.product && this.quantity < this.product.stock) {
-      this.quantity++;
-    } else {
-      alert('Đã đạt số lượng tối đa trong kho!');
-    }
-  }
-
-  decreaseQuantity(): void {
-    if (this.quantity > 1) {
-      this.quantity--;
-    }
-  }
-
+  // --- CẬP NHẬT: Yêu cầu đăng nhập khi thêm giỏ hàng ---
   addToCart(): void {
-    if (this.product) {
-      const userId = this.authService.currentUserValue?.id?.toString() || 'user123';
-      
-      // Gửi ảnh bìa (product.image)
-      const productForCart = {
-        ...this.product,
-        image: this.product.image || this.galleryImages[0] || this.defaultPlaceholder
-      };
+    if (!this.authService.isLoggedIn) {
+      alert('Vui lòng đăng nhập để thêm vào giỏ hàng!');
+      this.router.navigate(['/login']);
+      return;
+    }
 
-      this.cartService.addToCartFrontend(productForCart, this.quantity, userId).subscribe({
-        next: () => {
-          alert(`Đã thêm ${this.quantity} ${this.product?.name} vào giỏ hàng!`);
-        },
-        error: (error: any) => {
-          console.error('Error adding to cart:', error);
-          alert('❌ Có lỗi xảy ra khi thêm vào giỏ hàng!');
-        }
+    if (this.product) {
+      let cartImage = this.selectedImage;
+      if (this.isMediaVideo(cartImage)) {
+           cartImage = this.filteredGalleryImages.find(img => !this.isMediaVideo(img)) || this.defaultPlaceholder;
+      }
+      const productForCart = { ...this.product, image: cartImage };
+
+      this.cartService.addToCartFrontend(productForCart, this.quantity).subscribe({
+        next: () => alert(`Đã thêm ${this.quantity} ${this.product?.name} vào giỏ hàng!`),
+        error: (error: any) => alert('Lỗi thêm giỏ hàng')
       });
     }
   }
 
+  // --- CẬP NHẬT: Yêu cầu đăng nhập khi mua ngay ---
   buyNow(): void {
+    if (!this.authService.isLoggedIn) {
+      alert('Vui lòng đăng nhập để mua ngay!');
+      this.router.navigate(['/login']);
+      return;
+    }
+
     if (this.product) {
-      const userId = this.authService.currentUserValue?.id?.toString() || 'user123';
-
-      const productForCart = {
-        ...this.product,
-        image: this.product.image || this.galleryImages[0] || this.defaultPlaceholder
-      };
-
-      this.cartService.addToCartFrontend(productForCart, this.quantity, userId).subscribe({
-        next: () => {
-          this.router.navigate(['/checkout']); 
-        },
-        error: (error: any) => {
-          console.error('Error adding to cart:', error);
-          alert('❌ Có lỗi xảy ra! Vui lòng thử lại.');
-        }
-      });
+        this.addToCart();
+        this.router.navigate(['/checkout']);
     }
   }
 
-  // THÊM HÀM KIỂM TRA MEDIA TYPE
   isMediaVideo(url: string): boolean {
-    // Sửa: Phải kiểm tra 'videoUrl' vì 'selectedImage' có thể là ảnh
     if (!this.videoUrl) return false;
-    // Chỉ là video NẾU url đang chọn LÀ url video
     return url === this.videoUrl;
   }
 
   addToWishlist(): void {
     if (this.product && this.product.id) {
-      if (this.authService.isLoggedIn) {
-        this.authService.addToWishlist(String(this.product.id)).subscribe({
-          next: (response: any) => {
-            if (response.success) alert('❤️ ' + response.message);
-            else alert('ℹ️ ' + response.message);
-          },
-          error: (error: any) => alert('❌ Có lỗi xảy ra khi thêm vào wishlist!')
-        });
-      } else {
-        alert('🔐 Vui lòng đăng nhập để thêm vào danh sách yêu thích!');
-        this.router.navigate(['/login']);
-      }
+        if(this.authService.isLoggedIn) {
+            this.authService.addToWishlist(String(this.product.id)).subscribe({
+                next: (res: any) => alert(res.success ? '❤️ ' + res.message : 'ℹ️ ' + res.message),
+                error: () => alert('Lỗi thao tác')
+            });
+        } else {
+            alert('🔐 Vui lòng đăng nhập!');
+            this.router.navigate(['/login']);
+        }
     }
   }
 
   isInWishlist(): boolean {
-    if (!this.authService.currentUserValue || !this.product?.id) {
-      return false;
-    }
-    return this.authService.currentUserValue.wishlist?.includes((this.product.id)) || false;
+    return this.authService.currentUserValue?.wishlist?.includes(String(this.product?.id)) || false;
   }
 
-  getDiscountPercent(): number {
+  getDiscount(): number {
     if (this.product?.originalPrice && this.product.originalPrice > this.product.price) {
-      return Math.round(((this.product.originalPrice - this.product.price) / this.product.originalPrice) * 100);
+        return Math.round(((this.product.originalPrice - this.product.price) / this.product.originalPrice) * 100);
     }
     return 0;
   }
 
-  getDiscount(): number {
-    return this.getDiscountPercent();
-  }
-  
   getStarRating(rating: number): string {
     const fullStars = Math.floor(rating);
-    const halfStar = rating % 1 >= 0.5 ? 1 : 0; 
+    const halfStar = rating % 1 >= 0.5 ? 1 : 0;
     const emptyStars = 5 - fullStars - halfStar;
-    
     return '★'.repeat(fullStars) + '½'.repeat(halfStar) + '☆'.repeat(emptyStars);
   }
 
-  setActiveTab(tab: string): void {
-    this.activeTab = tab;
-  }
+  setActiveTab(tab: string): void { this.activeTab = tab; }
+
   onSubmitReview(reviewForm: NgForm): void {
-    if (reviewForm.invalid) {
-      alert('Vui lòng chọn số sao và viết bình luận.');
-      return;
-    }
-    
-    if (!this.product) return;
-
-    if (!this.authService.isLoggedIn) {
-      alert('Vui lòng đăng nhập để gửi đánh giá!');
-      this.router.navigate(['/login']);
-      return;
-    }
-
+    if (reviewForm.invalid) { alert('Vui lòng nhập đủ thông tin.'); return; }
+    if (!this.authService.isLoggedIn) { this.router.navigate(['/login']); return; }
     this.isSubmittingReview = true;
     this.newReview.author = this.authService.userName || 'Khách hàng';
-
-    this.productService.addReview(this.product.id, this.newReview).subscribe({
-      next: (updatedProduct) => {
-        // Cập nhật sản phẩm với review mới
-        this.product = updatedProduct; 
-        alert('Cảm ơn đánh giá của bạn!');
-        
-        // Reset form
-        this.newReview.rating = 5;
-        this.newReview.comment = '';
-        reviewForm.resetForm(this.newReview); 
-
-        this.isSubmittingReview = false;
-      },
-      error: (err) => {
-        console.error('Lỗi khi gửi review:', err);
-        alert('Gửi đánh giá thất bại. Vui lòng thử lại.');
-        this.isSubmittingReview = false;
-      }
+    this.productService.addReview(this.product!.id, this.newReview).subscribe({
+        next: (updated) => { this.product = updated; alert('Đánh giá thành công!'); reviewForm.resetForm(); this.isSubmittingReview = false; },
+        error: () => { alert('Lỗi gửi đánh giá.'); this.isSubmittingReview = false; }
     });
   }
 
+  hasSpec(spec: any): boolean { return spec !== undefined && spec !== null && spec !== ''; }
+  showAdminNotice(): boolean { return this.authService.isAdminSync(); }
+  getSupportPhone(): string { return (this.product as any)?.supportPhone || '1900 1234'; }
+  getReturnPolicyText(): string { return `Đổi trả ${(this.product as any)?.returnPolicyDays || 30} ngày`; }
 
-  formatArray(items: string[] | undefined): string {
-    if (!items || items.length === 0) return '';
-    return items.join(', ');
-  }
-
-  hasSpec(spec: any): boolean {
-    return spec !== undefined && spec !== null && spec !== '';
-  }
-
-  showAdminNotice(): boolean {
-    return this.authService.isAdminSync();
+  getConnectivityLabel(code: string | undefined): string {
+    if (!code) return '';
+    const map: Record<string, string> = {
+      'wireless': 'Không dây',
+      'wired': 'Có dây'
+    };
+    return map[code.toLowerCase()] || code;
   }
 }

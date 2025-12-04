@@ -1,7 +1,6 @@
 <div class="login-page">
   <div class="container">
     <div class="login-container">
-      <!-- Left Side - Form -->
       <div class="login-form-section">
         <div class="form-header">
           <a routerLink="/" class="back-home">
@@ -12,7 +11,6 @@
         </div>
 
         <form (ngSubmit)="onSubmit()" class="login-form">
-          <!-- Email Field -->
           <div class="form-group">
             <label for="email" class="form-label">Email</label>
             <input
@@ -26,7 +24,6 @@
             >
           </div>
 
-          <!-- Password Field -->
           <div class="form-group">
             <label for="password" class="form-label">Mật Khẩu</label>
             <input
@@ -46,14 +43,12 @@
           </a>
           </div>
 
-          <!-- Error Message -->
           @if (errorMessage) {
             <div class="error-message">
               {{ errorMessage }}
             </div>
           }
 
-          <!-- Submit Button -->
           <button
             type="submit"
             class="login-btn"
@@ -66,52 +61,13 @@
             {{ isLoading ? 'Đang đăng nhập...' : 'Đăng Nhập' }}
           </button>
 
-          <!-- Demo Accounts -->
-          <div class="demo-accounts">
-            <p class="demo-title">Tài khoản demo:</p>
-            <div class="demo-buttons">
-              <button
-                type="button"
-                class="demo-btn admin-demo"
-                (click)="loginWithDemo('admin')"
-              >
-                Đăng nhập Admin
-              </button>
-              <button
-                type="button"
-                class="demo-btn user-demo"
-                (click)="loginWithDemo('user')"
-              >
-                Đăng nhập User
-              </button>
-            </div>
-          </div>
         </form>
 
-        <!-- Divider -->
-        <div class="divider">
-          <span>Hoặc</span>
-        </div>
-
-        <!-- Social Login -->
-        <div class="social-login">
-          <button class="social-btn google-btn">
-            <span class="social-icon">🔍</span>
-            Tiếp tục với Google
-          </button>
-          <button class="social-btn facebook-btn">
-            <span class="social-icon">📘</span>
-            Tiếp tục với Facebook
-          </button>
-        </div>
-
-        <!-- Register Link -->
         <div class="register-link">
           <p>Chưa có tài khoản? <a routerLink="/register" class="link">Đăng ký ngay</a></p>
         </div>
       </div>
 
-      <!-- Right Side - Illustration -->
       <div class="login-illustration">
         <div class="illustration-content">
           <div class="illustration-image">

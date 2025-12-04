@@ -1,33 +1,33 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, map, tap } from 'rxjs';
+import { Observable, BehaviorSubject, forkJoin, of } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { Product } from '../interfaces/product';
+import { AuthService } from './auth';
+import { ProductService } from './product'; // Import ProductService
 
-// Interface dùng nội bộ trong Angular (có ảnh)
 export interface CartItem {
   productId: string;
   productName: string;
-  price: number; 
+  price: number;
   quantity: number;
-  subTotal?: number; 
-  image: string; 
+  subTotal?: number;
+  image: string;
 }
 
-// Interface dùng nội bộ trong Angular
 export interface Cart {
   id?: string;
   userId: string;
   items: CartItem[];
-  totalAmount: number; 
+  totalAmount: number;
 }
-
 
 interface CartItemRequest {
   productId: string;
   productName: string;
-  price: string; // Đổi sang string
+  price: string;
   quantity: number;
-  // subTotal BỊ LOẠI BỎ - Để backend tự tính
+  image: string;
 }
 
 @Injectable({
@@ -35,153 +35,150 @@ interface CartItemRequest {
 })
 export class CartService {
   private apiUrl = 'http://localhost:8080/api/carts';
-  
-  // Nguồn tin cậy (source of truth) cho giỏ hàng ở frontend (LUÔN CÓ ẢNH)
   private cartItemsSubject = new BehaviorSubject<CartItem[]>([]);
   public cartItems$ = this.cartItemsSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
-
-  
-  private getCartByUserAPI(userId: string): Observable<Cart> {
-    return this.http.get<Cart>(`${this.apiUrl}/user/${userId}`);
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService,
+    private productService: ProductService // Inject để lấy ảnh
+  ) {
+    this.authService.currentUser$.subscribe(user => {
+      if (user) this.loadCart();
+      else this.cartItemsSubject.next([]);
+    });
   }
 
-  // Gửi đi CartItemRequest (với price là string và không có subTotal)
-  private addToCartAPI(userId: string, item: CartItem): Observable<Cart> {
-    const requestItem: CartItemRequest = {
-      productId: item.productId,
-      productName: item.productName,
-      price: item.price.toString(), // Chuyển sang string
-      quantity: item.quantity
-    };
-    return this.http.post<Cart>(`${this.apiUrl}/user/${userId}/items`, requestItem);
+  private getCurrentUserId(): string {
+    return this.authService.currentUserValue?.id || 'user123';
   }
 
-  private updateQuantityAPI(userId: string, productId: string, quantity: number): Observable<Cart> {
-    return this.http.put<Cart>(`${this.apiUrl}/user/${userId}/items/${productId}?quantity=${quantity}`, {});
-  }
+  // --- LOGIC MỚI: LOAD CART KÈM ẢNH TỪ PRODUCT ---
+  public loadCart(): void {
+    const userId = this.getCurrentUserId();
 
-  private removeFromCartAPI(userId: string, productId: string): Observable<Cart> {
-    return this.http.delete<Cart>(`${this.apiUrl}/user/${userId}/items/${productId}`);
-  }
+    this.http.get<Cart>(`${this.apiUrl}/user/${userId}`).pipe(
+      switchMap(cart => {
+        if (!cart.items || cart.items.length === 0) {
+          return of([]);
+        }
 
-  private clearCartAPI(userId: string): Observable<Cart> {
-    return this.http.delete<Cart>(`${this.apiUrl}/user/${userId}/clear`);
-  }
+        // Tạo danh sách các request lấy thông tin sản phẩm để lấy ảnh
+        const productRequests = cart.items.map(item =>
+          this.productService.getProductById(item.productId).pipe(
+            map(product => {
+              // Logic chọn ảnh giống hệt ProductDetail
+              let imageUrl = product.image;
+              if (!imageUrl && product.images && product.images.length > 0) {
+                  imageUrl = product.images[0];
+              }
 
-  // ===================================
-  // HÀM DÙNG CHO COMPONENT (Quản lý State)
-  // ===================================
+              return {
+                ...item,
+                image: imageUrl || '' // Gán ảnh chuẩn từ Product vào CartItem
+              };
+            }),
+            // Nếu lỗi (xoá sp rồi), giữ nguyên item cũ
+            catchError(() => of(item))
+          )
+        );
+
+        // Chạy song song tất cả request
+        return forkJoin(productRequests);
+      })
+    ).subscribe({
+      next: (itemsWithImages) => {
+        this.cartItemsSubject.next(itemsWithImages);
+      },
+      error: (err) => {
+        console.error('Load cart failed', err);
+        this.cartItemsSubject.next([]);
+      }
+    });
+  }
 
   getCartItems(): Observable<CartItem[]> {
+    if (this.cartItemsSubject.value.length === 0) {
+        this.loadCart();
+    }
     return this.cartItems$;
   }
 
-  addToCartFrontend(product: Product, quantity: number = 1, userId: string = 'user123'): Observable<void> {
-    // 1. Tạo item đầy đủ (có ảnh)
+  // --- CÁC HÀM TƯƠNG TÁC ---
+
+  addToCartFrontend(product: Product, quantity: number = 1): Observable<void> {
+    const userId = this.getCurrentUserId();
+
+    // Logic chọn ảnh để hiển thị ngay lập tức (Optimistic UI)
+    let displayImage = product.image;
+    if (!displayImage && product.images && product.images.length > 0) {
+        displayImage = product.images[0];
+    }
+
     const cartItem: CartItem = {
       productId: product.id,
       productName: product.name,
       price: product.price,
       quantity: quantity,
-      image: product.image // <-- Lấy ảnh từ product
+      image: displayImage || ''
     };
 
-    return this.addToCartAPI(userId, cartItem).pipe(
-      tap((cartFromBackend) => {
-        // 2. Cập nhật BehaviorSubject
-        const currentItems = this.cartItemsSubject.value;
-        const existingItemIndex = currentItems.findIndex(i => i.productId === cartItem.productId);
-        
-        const itemFromBackend = cartFromBackend.items.find(i => i.productId === cartItem.productId);
+    const requestItem: CartItemRequest = {
+      productId: cartItem.productId,
+      productName: cartItem.productName,
+      price: cartItem.price.toString(),
+      quantity: cartItem.quantity,
+      image: cartItem.image
+    };
 
-        if (existingItemIndex > -1) {
-          // Item đã tồn tại -> Cập nhật số lượng
-          currentItems[existingItemIndex].quantity = itemFromBackend?.quantity || (currentItems[existingItemIndex].quantity + quantity);
-          this.cartItemsSubject.next([...currentItems]);
-        } else {
-          // Item mới -> Thêm vào (lấy item từ backend và ghép ảnh vào)
-          if (itemFromBackend) {
-            // Gán ảnh vào item trả về từ backend
-            const newItem: CartItem = { ...itemFromBackend, price: Number(itemFromBackend.price), image: cartItem.image };
-            this.cartItemsSubject.next([...currentItems, newItem]);
-          }
-        }
-      }),
-      map(() => undefined) // Trả về void cho component
-    );
-  }
-
-  removeFromCartFrontend(productId: string, userId: string = 'user123'): Observable<void> {
-    return this.removeFromCartAPI(userId, productId).pipe(
+    return this.http.post<Cart>(`${this.apiUrl}/user/${userId}/items`, requestItem).pipe(
       tap(() => {
-        // Cập nhật BehaviorSubject: Xóa item
-        const currentItems = this.cartItemsSubject.value;
-        const newItems = currentItems.filter(item => item.productId !== productId);
-        this.cartItemsSubject.next(newItems);
+        // Sau khi thêm, load lại toàn bộ để đồng bộ chuẩn nhất
+        this.loadCart();
       }),
       map(() => undefined)
     );
   }
 
-  updateQuantityFrontend(productId: string, quantity: number, userId: string = 'user123'): Observable<void> {
-    return this.updateQuantityAPI(userId, productId, quantity).pipe(
-      tap((cartFromBackend) => {
-        // Cập nhật BehaviorSubject: Sửa số lượng
+  updateQuantityFrontend(productId: string, quantity: number): Observable<void> {
+    const userId = this.getCurrentUserId();
+
+    return this.http.put<Cart>(`${this.apiUrl}/user/${userId}/items/${productId}?quantity=${quantity}`, {}).pipe(
+      tap(() => {
+        // Cập nhật local state ngay để giao diện mượt
         const currentItems = this.cartItemsSubject.value;
         const itemIndex = currentItems.findIndex(item => item.productId === productId);
-        
         if (itemIndex > -1) {
-          const itemFromBackend = cartFromBackend.items.find(i => i.productId === productId);
-          currentItems[itemIndex].quantity = itemFromBackend?.quantity || quantity;
-          this.cartItemsSubject.next([...currentItems]);
+            currentItems[itemIndex].quantity = quantity;
+            this.cartItemsSubject.next([...currentItems]);
         }
+        // Load lại nền để đảm bảo đồng bộ giá/tồn kho
+        this.loadCart();
       }),
       map(() => undefined)
     );
   }
 
-  clearCartFrontend(userId: string = 'user123'): Observable<void> {
-    return this.clearCartAPI(userId).pipe(
+  removeFromCartFrontend(productId: string): Observable<void> {
+    const userId = this.getCurrentUserId();
+    return this.http.delete<Cart>(`${this.apiUrl}/user/${userId}/items/${productId}`).pipe(
       tap(() => {
-        this.cartItemsSubject.next([]); // Xóa tất cả
+        const currentItems = this.cartItemsSubject.value;
+        this.cartItemsSubject.next(currentItems.filter(i => i.productId !== productId));
       }),
       map(() => undefined)
     );
   }
-  
+
+  clearCartFrontend(): Observable<void> {
+    const userId = this.getCurrentUserId();
+    return this.http.delete<Cart>(`${this.apiUrl}/user/${userId}/clear`).pipe(
+      tap(() => this.cartItemsSubject.next([])),
+      map(() => undefined)
+    );
+  }
+
   getCartItemCountSync(): number {
-    const items = this.cartItemsSubject.value;
-    return items.reduce((sum, item) => sum + item.quantity, 0);
-  }
-
- private getFullImageUrl(url: string | undefined): string {
-    const defaultPlaceholder = 'assets/images/default-product.png';
-    if (!url || url.trim() === '') {
-      return defaultPlaceholder; // Trả về ảnh mặc định nếu URL rỗng
-    }
-    if (url.startsWith('http')) {
-      return url; // Nếu đã là URL đầy đủ
-    }
-    return `http://localhost:8080${url}`; 
-  }
-
-  private getSafeDisplayImage(product: Product): string {
-    const defaultPlaceholder = 'assets/images/default-product.png';
-    let imageUrl = '';
-
-    // 1. Ưu tiên ảnh Gallery đầu tiên
-    if (product.images && product.images.length > 0) {
-      imageUrl = this.getFullImageUrl(product.images[0]);
-    }
-    
-    // 2. Nếu Gallery rỗng, thử lấy Ảnh Bìa
-    if (!imageUrl || imageUrl.endsWith('default-product.png')) { 
-      imageUrl = this.getFullImageUrl(product.image);
-    }
-    
-    // 3. Nếu cả hai đều rỗng, dùng ảnh mặc định
-    return imageUrl || defaultPlaceholder;
+    return this.cartItemsSubject.value.reduce((sum, item) => sum + item.quantity, 0);
   }
 }

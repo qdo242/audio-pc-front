@@ -10,23 +10,22 @@ export interface Product {
   name: string;
   price: number;
   originalPrice?: number;
-  image: string; // Đây là Ảnh Bìa (Cover Image)
-  images?: string[]; // Đây là mảng chứa [Video (nếu có), Ảnh Gallery 1, Ảnh Gallery 2,...]
+  image: string;
+  images?: string[];
   category: string;
-  //subCategory: string;
   brand: string;
   description: string;
-  
-  videoUrl: string | null; 
-  features: string[];
-  stock: number; 
+
+  videoUrl?: string | null;
+  features?: string[];
+  stock: number;
   rating: number;
   reviewCount: number;
-  reviews: Review[];
+  reviews?: Review[];
   isActive?: boolean;
   isFeatured?: boolean;
   type?: string;
-  
+
   // Thuộc tính chi tiết
   colors?: string[];
   weight?: string;
@@ -43,12 +42,15 @@ export interface Product {
   chargingTime?: string;
   compatibility?: string[];
   includedItems?: string[];
-}
 
+  // Các trường bổ sung (Fix lỗi TS2339)
+  supportPhone?: string;
+  returnPolicyDays?: number;
+}
 
 export interface Order {
   id: number;
-  items: any[]; 
+  items: any[];
   total: number;
   status: 'pending' | 'completed' | 'cancelled';
   createdAt: Date;

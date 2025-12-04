@@ -16,8 +16,8 @@
         />
         <span class="search-icon">🔍</span>
       </div>
-      
-      <button 
+
+      <button
         class="mobile-filter-toggle"
         (click)="toggleMobileFilters()"
       >
@@ -147,12 +147,23 @@
             </label>
           </div>
         </div>
-      </div> <div class="products-grid-container">
+      </div>
+      <div class="products-grid-container">
         <div class="products-grid-header">
           <p class="results-count">
             Hiển thị <strong>{{ getProductCount() }}</strong> sản phẩm
           </p>
-        </div>
+
+          <div class="sort-controls">
+            <select [(ngModel)]="selectedSort" (change)="onFilterChange()" class="sort-select">
+                <option value="default">Sắp xếp: Mặc định</option>
+                <option value="name_asc">Tên (A-Z)</option>
+                <option value="name_desc">Tên (Z-A)</option>
+                <option value="price_asc">Giá (Thấp đến Cao)</option>
+                <option value="price_desc">Giá (Cao đến Thấp)</option>
+            </select>
+          </div>
+          </div>
 
         <div *ngIf="isLoading" class="loading-state">
           <div class="loading-spinner"></div>
@@ -173,5 +184,7 @@
             Xóa bộ lọc
           </button>
         </div>
-      </div> </div> </div>
+      </div>
+    </div>
+  </div>
 </div>

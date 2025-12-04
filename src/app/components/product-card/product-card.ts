@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core'; 
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { Product } from '../../interfaces/product';
 import { CartService } from '../../services/cart';
-import { AuthService } from '../../services/auth'; 
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-product-card',
@@ -15,7 +15,7 @@ import { AuthService } from '../../services/auth';
 export class ProductCard implements OnInit {
     @Input() product! : Product;
     @Output() wishlistChanged = new EventEmitter<void>();
-    
+
     displayImage: string = '';
 
     constructor(
@@ -27,34 +27,23 @@ export class ProductCard implements OnInit {
     ngOnInit(): void {
       this.displayImage = this.getSafeDisplayImage();
     }
-    
+
     getFullImageUrl(url: string | undefined): string {
       const defaultPlaceholder = 'assets/images/default-product.png';
-      if (!url || url.trim() === '') {
-        return ''; 
-      }
-      if (url.startsWith('http')) {
-        return url; 
-      }
-      return `http://localhost:8080${url}`; 
+      if (!url || url.trim() === '') return '';
+      if (url.startsWith('http')) return url;
+      return `http://localhost:8080${url}`;
     }
 
-    // SỬA: Đảo ngược logic. Ưu tiên product.image (Ảnh Bìa) trước
     getSafeDisplayImage(): string {
       const defaultPlaceholder = 'assets/images/default-product.png';
       let imageUrl = '';
-
-      // 1. Ưu tiên Ảnh Bìa (product.image)
       imageUrl = this.getFullImageUrl(this.product.image);
-      
-      // 2. Nếu không có Ảnh Bìa, thử lấy ảnh Gallery đầu tiên (product.images[0])
-      if (!imageUrl || imageUrl.endsWith('default-product.png')) { 
+      if (!imageUrl || imageUrl.endsWith('default-product.png')) {
         if (this.product.images && this.product.images.length > 0) {
-          // (Backend mới đã tách video, nên images[0] luôn là ảnh)
           imageUrl = this.getFullImageUrl(this.product.images[0]);
         }
       }
-      
       return imageUrl || defaultPlaceholder;
     }
 
@@ -69,11 +58,20 @@ export class ProductCard implements OnInit {
       this.router.navigate(['/products', this.product.id]);
     }
 
+    // --- CẬP NHẬT: Yêu cầu đăng nhập ---
     addToCart(event: Event): void {
       event.stopPropagation();
-      const userId = this.authService.currentUserValue?.id?.toString() || 'user123';
-      
-      this.cartService.addToCartFrontend(this.product, 1, userId).subscribe({
+
+      if (!this.authService.isLoggedIn) {
+        alert('Vui lòng đăng nhập để thêm vào giỏ hàng!');
+        this.router.navigate(['/login']);
+        return;
+      }
+
+      // Chặn click nếu hết hàng
+      if (this.product.stock <= 0) return;
+
+      this.cartService.addToCartFrontend(this.product, 1).subscribe({
         next: () => {
           alert('Đã thêm vào giỏ hàng!');
         },
@@ -86,9 +84,8 @@ export class ProductCard implements OnInit {
 
     getStarRating(): string {
       const fullStars = Math.floor(this.product.rating);
-      const halfStar = this.product.rating % 1 >= 0.5 ? 1 : 0; 
+      const halfStar = this.product.rating % 1 >= 0.5 ? 1 : 0;
       const emptyStars = 5 - fullStars - halfStar;
-      
       return '★'.repeat(fullStars) + '½'.repeat(halfStar) + '☆'.repeat(emptyStars);
     }
 
@@ -100,8 +97,7 @@ export class ProductCard implements OnInit {
     }
 
     toggleWishlist(event: Event): void {
-      event.stopPropagation(); 
-
+      event.stopPropagation();
       if (!this.authService.isLoggedIn) {
         alert('Vui lòng đăng nhập để sử dụng tính năng này!');
         this.router.navigate(['/login']);
@@ -110,18 +106,12 @@ export class ProductCard implements OnInit {
 
       if (this.isInWishlist()) {
         this.authService.removeFromWishlist(this.product.id).subscribe({
-          next: () => {
-            console.log('Đã xóa khỏi wishlist');
-            this.wishlistChanged.emit(); 
-          },
+          next: () => { this.wishlistChanged.emit(); },
           error: (err) => console.error('Lỗi khi xóa wishlist:', err)
         });
       } else {
         this.authService.addToWishlist(this.product.id).subscribe({
-          next: () => {
-            console.log('Đã thêm vào wishlist');
-            this.wishlistChanged.emit();
-          },
+          next: () => { this.wishlistChanged.emit(); },
           error: (err) => console.error('Lỗi khi thêm wishlist:', err)
         });
       }
