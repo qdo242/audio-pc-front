@@ -317,7 +317,28 @@ export class Admin implements OnInit, AfterViewChecked {
   setColorFromSwatch(g: any, v: string): void { g.colorName = v; }
 
   updateOrderStatus(id: string | undefined, e: Event): void { if(!id) return; this.orderService.updateOrderStatus(id, (e.target as any).value).subscribe(() => this.loadOrders()); }
-  viewOrder(id: string | undefined): void { if(!id) return; const o = this.orders.find(x => x.id === id); if(o) alert(`Đơn hàng #${id}\nKhách: ${o.shippingAddress.fullName}\nTổng: ${o.totalAmount.toLocaleString()}₫`); }
+
+  viewOrder(orderId: string | undefined): void {
+    if (!orderId) return;
+    const order = this.orders.find(o => o.id === orderId);
+
+    if (order) {
+      // Format ngày tháng sang tiếng Việt dễ đọc
+      const dateStr = order.createdAt
+        ? new Date(order.createdAt).toLocaleString('vi-VN')
+        : 'N/A';
+
+      alert(
+        `Chi tiết đơn hàng #${orderId}\n` +
+        `----------------------------\n` +
+        `Khách hàng: ${order.shippingAddress.fullName}\n` +
+        `Thời gian: ${dateStr}\n` + // Dòng mới thêm
+        `Tổng tiền: ${order.totalAmount.toLocaleString()}₫\n` +
+        `Trạng thái: ${this.getStatusText(order.status)}`
+      );
+    }
+  }
+  // viewOrder(id: string | undefined): void { if(!id) return; const o = this.orders.find(x => x.id === id); if(o) alert(`Đơn hàng #${id}\nKhách: ${o.shippingAddress.fullName}\nTổng: ${o.totalAmount.toLocaleString()}₫`); }
   deleteOrder(id: string | undefined): void { if(id && confirm('Xóa?')) this.orderService.deleteOrder(id).subscribe(() => this.loadOrders()); }
   getStatusText(s: string): string { return s; }
   getStatusColor(s: string): string { return '#ccc'; }

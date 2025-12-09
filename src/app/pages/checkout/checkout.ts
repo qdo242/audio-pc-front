@@ -29,6 +29,11 @@ export class Checkout implements OnInit, OnDestroy {
   paymentMethod: 'COD' | 'CREDIT_CARD' | 'PAYPAL' | 'BANK_TRANSFER' = 'COD';
   private cartSubscription: Subscription | undefined;
 
+  // --- THÔNG TIN NGÂN HÀNG (SỬA Ở ĐÂY NẾU CẦN) ---
+  readonly BANK_ID = 'BIDV';
+  readonly ACCOUNT_NO = '3300576940';
+  readonly ACCOUNT_NAME = 'NGUYEN TIEN THANH';
+
   constructor(
     private cartService: CartService,
     public authService: AuthService,
@@ -46,7 +51,21 @@ export class Checkout implements OnInit, OnDestroy {
     if (this.cartSubscription) this.cartSubscription.unsubscribe();
   }
 
-  // Hàm trackBy giúp Angular render danh sách ổn định, tránh lỗi hiển thị ảnh
+  // --- HÀM SINH LINK QR CODE TỰ ĐỘNG ---
+  get qrCodeUrl(): string {
+    // 1. Lấy số tiền cần thanh toán
+    const amount = this.grandTotal;
+
+    // 2. Tạo nội dung chuyển khoản (Ví dụ: "TT 0912345678")
+    // Lưu ý: Nội dung nên ngắn, không dấu, không ký tự đặc biệt để tránh lỗi
+    let description = `TT ${this.customerInfo.phone || 'don hang'}`;
+    description = description.replace(/ /g, '%20'); // Thay khoảng trắng bằng %20
+
+    // 3. Tạo URL gọi API VietQR (Dùng template 'compact2' để hiện kèm logo ngân hàng)
+    // Cú pháp: https://img.vietqr.io/image/<BANK_ID>-<ACCOUNT_NO>-<TEMPLATE>.png?amount=<AMOUNT>&addInfo=<INFO>&accountName=<NAME>
+    return `https://img.vietqr.io/image/${this.BANK_ID}-${this.ACCOUNT_NO}-compact2.jpg?amount=${amount}&addInfo=${description}&accountName=${encodeURIComponent(this.ACCOUNT_NAME)}`;
+  }
+
   trackByFn(index: number, item: CartItem): string {
     return item.productId;
   }

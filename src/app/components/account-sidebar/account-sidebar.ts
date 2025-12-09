@@ -11,11 +11,10 @@ import { AuthService } from '../../services/auth';
   styleUrls: ['./account-sidebar.scss']
 })
 export class AccountSidebar {
-  // Input này sẽ nhận giá trị 'profile', 'orders', 'wishlist', 'password'
-  @Input() activePage: string = 'profile'; 
+  @Input() activePage: string = 'profile';
 
   constructor(
-    public authService: AuthService, // Public để HTML dùng
+    public authService: AuthService,
     private router: Router
   ) {}
 
@@ -25,11 +24,8 @@ export class AccountSidebar {
     });
   }
 
-  // Chuyển hướng đến trang profile và đặt tab
-  navigateToPasswordTab(): void {
-    // Điều hướng đến /profile và truyền một state
-    // (ProfileComponent sẽ cần được cập nhật để đọc state này, 
-    // nhưng hiện tại nó sẽ chỉ điều hướng)
-    this.router.navigate(['/profile'], { state: { tab: 'password' } });
+  // Hàm điều hướng chung cho các tab
+  navigateToTab(tabName: string): void {
+    this.router.navigate(['/profile'], { queryParams: { tab: tabName } });
   }
 }

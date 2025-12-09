@@ -24,14 +24,23 @@
                 <input type="radio" name="payment" value="COD" [(ngModel)]="paymentMethod" hidden>
                 <div class="payment-content"><div class="payment-icon">💰</div><div class="payment-info"><div class="payment-title">COD (Tiền mặt)</div><div class="payment-desc">Thanh toán khi nhận hàng</div></div></div>
               </label>
+
               <label class="payment-method" [class.active]="paymentMethod === 'BANK_TRANSFER'">
                 <input type="radio" name="payment" value="BANK_TRANSFER" [(ngModel)]="paymentMethod" hidden>
                 <div class="payment-content"><div class="payment-icon">🏦</div><div class="payment-info"><div class="payment-title">Chuyển khoản</div><div class="payment-desc">Qua VietQR/Ngân hàng</div></div></div>
+
                 @if (paymentMethod === 'BANK_TRANSFER') {
                   <div class="qr-code-section">
-                    <p>Quét mã để thanh toán:</p>
-                    <img src="images/qrthanh.jpg" alt="QR Code" class="qr-image">
-                    <div class="bank-details"><strong>BIDV</strong> - 3300576940<br>NGUYEN TIEN THANH</div>
+                    <p>Quét mã để thanh toán ({{ grandTotal | number }}₫):</p>
+                    <img [src]="qrCodeUrl" alt="QR Code" class="qr-image">
+
+                    <div class="bank-details">
+                      <strong>{{ BANK_ID }}</strong> - {{ ACCOUNT_NO }}<br>
+                      {{ ACCOUNT_NAME }}<br>
+                      <small style="color: #666; margin-top: 5px; display: block;">
+                        Nội dung: TT {{ customerInfo.phone }}
+                      </small>
+                    </div>
                   </div>
                 }
               </label>

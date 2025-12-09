@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ElementRef, HostListener } from '@angular/core'; // SỬA: Thêm OnInit, OnDestroy, ElementRef, HostListener
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { ChatService, Notification } from '../../services/chat'; 
+import { ChatService, Notification } from '../../services/chat';
 import { Observable, Subscription } from 'rxjs'; // SỬA: Thêm Subscription
 
 @Component({
@@ -55,11 +55,12 @@ export class NotificationBell implements OnInit, OnDestroy { // SỬA: Thêm OnI
 
   onNotificationClick(notification: Notification): void {
     this.isDropdownOpen = false;
-    this.chatService.markAsRead(notification); 
-    this.router.navigate([notification.link]); 
+    this.chatService.markAsRead(notification);
+    this.router.navigate([notification.link]);
   }
 
   markAllAsRead(): void {
     // (Tùy chọn) Implement logic đánh dấu tất cả đã đọc
   }
 }
+

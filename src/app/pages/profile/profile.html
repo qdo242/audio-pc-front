@@ -1,17 +1,17 @@
 <div class="profile-page">
   <div class="container">
     <div class="profile-layout">
-      
+
       <app-account-sidebar [activePage]="activeTab"></app-account-sidebar>
 
       <main class="profile-content">
+
         @if (activeTab === 'profile') {
           <div class="profile-tab">
             <h1 class="page-title">Hồ sơ của tôi</h1>
             <p class="page-subtitle">Quản lý thông tin cá nhân của bạn để bảo mật tài khoản.</p>
-
             <form (ngSubmit)="onUpdateProfile()" class="profile-form">
-              <div class="form-group">
+               <div class="form-group">
                 <label for="email">Email</label>
                 <input type="email" id="email" [value]="authService.userEmail" class="form-input" readonly disabled>
               </div>
@@ -28,12 +28,8 @@
                 <input type="text" id="address" [(ngModel)]="profileData.address" name="address" class="form-input" required>
               </div>
 
-              @if (profileMessage) {
-                <div class="message success">{{ profileMessage }}</div>
-              }
-              @if (profileError) {
-                <div class="message error">{{ profileError }}</div>
-              }
+              @if (profileMessage) { <div class="message success">{{ profileMessage }}</div> }
+              @if (profileError) { <div class="message error">{{ profileError }}</div> }
 
               <div class="form-actions">
                 <button type="submit" class="btn btn-primary" [disabled]="isLoadingProfile">
@@ -48,9 +44,8 @@
           <div class="password-tab">
             <h1 class="page-title">Đổi mật khẩu</h1>
             <p class="page-subtitle">Để bảo mật, vui lòng không chia sẻ mật khẩu cho người khác.</p>
-
             <form (ngSubmit)="onChangePassword()" class="profile-form">
-              <div class="form-group">
+               <div class="form-group">
                 <label for="currentPassword">Mật khẩu hiện tại *</label>
                 <input type="password" id="currentPassword" [(ngModel)]="passwordData.currentPassword" name="currentPassword" class="form-input" required>
               </div>
@@ -63,12 +58,8 @@
                 <input type="password" id="confirmPassword" [(ngModel)]="passwordData.confirmPassword" name="confirmPassword" class="form-input" required>
               </div>
 
-              @if (passwordMessage) {
-                <div class="message success">{{ passwordMessage }}</div>
-              }
-              @if (passwordError) {
-                <div class="message error">{{ passwordError }}</div>
-              }
+              @if (passwordMessage) { <div class="message success">{{ passwordMessage }}</div> }
+              @if (passwordError) { <div class="message error">{{ passwordError }}</div> }
 
               <div class="form-actions">
                 <button type="submit" class="btn btn-primary" [disabled]="isLoadingPassword">
@@ -78,6 +69,41 @@
             </form>
           </div>
         }
+
+        @if (activeTab === 'wishlist') {
+          <div class="wishlist-tab">
+            <h1 class="page-title">Danh sách yêu thích</h1>
+            <p class="page-subtitle">Những sản phẩm bạn đang quan tâm.</p>
+
+            @if (isLoadingWishlist) {
+              <div class="loading-state" style="text-align: center; padding: 2rem;">
+                <div class="loading-spinner"></div>
+                <p>Đang tải...</p>
+              </div>
+            } @else {
+              @if (wishlistProducts.length > 0) {
+                <div class="wishlist-grid">
+                  @for (product of wishlistProducts; track product.id) {
+                    <div class="wishlist-item-wrapper">
+                      <app-product-card
+                        [product]="product"
+                        (wishlistChanged)="onWishlistChanged()">
+                      </app-product-card>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="empty-state" style="text-align: center; padding: 3rem;">
+                  <div class="empty-icon" style="font-size: 3rem; margin-bottom: 1rem;">💔</div>
+                  <h3>Danh sách trống</h3>
+                  <p>Bạn chưa thêm sản phẩm nào vào danh sách yêu thích.</p>
+                  <a routerLink="/products" class="btn btn-primary" style="margin-top: 1rem;">Khám phá ngay</a>
+                </div>
+              }
+            }
+          </div>
+        }
+
       </main>
     </div>
   </div>

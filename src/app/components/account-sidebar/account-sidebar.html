@@ -9,30 +9,34 @@
     </div>
   </div>
   <nav class="profile-nav">
-    <a 
-      routerLink="/profile" 
+    <button
       class="nav-item"
-      [class.active]="activePage === 'profile'">
+      [class.active]="activePage === 'profile'"
+      (click)="navigateToTab('profile')">
       👤 Thông tin tài khoản
-    </a>
-    <a 
-      routerLink="/orders" 
+    </button>
+
+    <a
+      routerLink="/orders"
       class="nav-item"
       [class.active]="activePage === 'orders'">
       📦 Lịch sử đơn hàng
     </a>
-    <a 
-      routerLink="/wishlist" 
+
+    <button
       class="nav-item"
-      [class.active]="activePage === 'wishlist'">
+      [class.active]="activePage === 'wishlist'"
+      (click)="navigateToTab('wishlist')">
       ❤️ Danh sách yêu thích
-    </a>
-    <button 
+    </button>
+
+    <button
       class="nav-item"
       [class.active]="activePage === 'password'"
-      (click)="navigateToPasswordTab()">
+      (click)="navigateToTab('password')">
       🔐 Đổi mật khẩu
     </button>
+
     <a (click)="logout()" class="nav-item logout">
       🚪 Đăng xuất
     </a>
